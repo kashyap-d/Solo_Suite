@@ -101,9 +101,9 @@ graph TD
     B --> C[Smart Taskboard]
     B --> D[Portfolio Showcase]
     B --> E[Client Requests]
-    E --> F[Request Analyzer (AI)]
-    C --> G[AI Schedule Optimizer]
-    G --> H[Weekly Plan / Todos]
+    E --> F["Request Analyzer (AI)"]
+    C --> G["AI Schedule Optimizer"]
+    G --> H["Weekly Plan & Todos"]
 ```
 
 ---
