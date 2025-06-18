@@ -1,0 +1,4 @@
+for our dark/light mode toggle we've imported a lot of features from shadcn 
+for the UI enhancement, and integrated them with out page layouts.
+
+for example: refer to solo_suite/src/components/ui directory
