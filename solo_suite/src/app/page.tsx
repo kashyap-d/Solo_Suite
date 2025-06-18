@@ -1,15 +1,24 @@
+"use client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Sparkles, Users, Briefcase, ArrowRight, CheckCircle } from "lucide-react"
 import { ModeToggle } from "@/components/theme-toggle"
+import { motion } from "framer-motion"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+    <div className="relative min-h-screen bg-white dark:bg-gray-900 transition-colors overflow-hidden">
+      {/* Animated Blobs Background */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute w-72 h-72 bg-indigo-300 dark:bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/3 w-72 h-72 bg-purple-300 dark:bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+        <div className="absolute top-1/3 left-2/3 w-72 h-72 bg-pink-300 dark:bg-pink-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+      </div>
+
       {/* Header */}
-      <header className="container mx-auto px-4 py-6">
+      <header className="relative z-10 container mx-auto px-4 py-6">
         <nav className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">SoloSuite</h1>
@@ -32,7 +41,12 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
+      <motion.section
+        className="relative z-10 container mx-auto px-4 py-20 text-center"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
             The Ultimate Platform for
@@ -57,10 +71,10 @@ export default function HomePage() {
             </Button>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="relative z-10 container mx-auto px-4 py-20">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Everything You Need to Succeed</h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
@@ -69,88 +83,59 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <Card className="hover:shadow-lg transition-shadow border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <CardHeader>
-              <Sparkles className="h-12 w-12 text-purple-600 dark:text-purple-400 mb-4" />
-              <CardTitle className="text-gray-900 dark:text-white">AI-Powered Taskboard</CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-300">
-                Generate detailed project tasks automatically using advanced AI
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Smart task generation
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Priority and time estimation
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Progress tracking
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <CardHeader>
-              <Users className="h-12 w-12 text-blue-600 dark:text-blue-400 mb-4" />
-              <CardTitle className="text-gray-900 dark:text-white">Dual User System</CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-300">
-                Separate dashboards for service providers and clients
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Provider dashboard
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Client marketplace
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Role-based features
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <CardHeader>
-              <Briefcase className="h-12 w-12 text-green-600 dark:text-green-400 mb-4" />
-              <CardTitle className="text-gray-900 dark:text-white">Project Management</CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-300">
-                Keep track of all your projects and deadlines in one place
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Deadline tracking
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Client communication
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Revenue analytics
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+          {[{
+            Icon: Sparkles,
+            title: "AI-Powered Taskboard",
+            description: "Generate detailed project tasks automatically using advanced AI",
+            features: ["Smart task generation", "Priority and time estimation", "Progress tracking"]
+          }, {
+            Icon: Users,
+            title: "Dual User System",
+            description: "Separate dashboards for service providers and clients",
+            features: ["Provider dashboard", "Client marketplace", "Role-based features"]
+          }, {
+            Icon: Briefcase,
+            title: "Project Management",
+            description: "Keep track of all your projects and deadlines in one place",
+            features: ["Deadline tracking", "Client communication", "Revenue analytics"]
+          }].map(({ Icon, title, description, features }, i) => (
+            <motion.div
+              key={title}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: i * 0.2 }}
+            >
+              <Card className="hover:shadow-lg transition-shadow border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                <CardHeader>
+                  <Icon className="h-12 w-12 mb-4 text-indigo-600 dark:text-indigo-400" />
+                  <CardTitle className="text-gray-900 dark:text-white">{title}</CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-300">{description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                    {features.map((f, j) => (
+                      <li key={j} className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20">
+      <motion.section
+        className="relative z-10 container mx-auto px-4 py-20"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+      >
         <div className="bg-indigo-600 dark:bg-indigo-700 rounded-2xl p-12 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">Ready to Launch Your Solo Career?</h2>
           <p className="text-lg mb-8 opacity-90">
@@ -167,10 +152,10 @@ export default function HomePage() {
             </Button>
           </Link>
         </div>
-      </section>
+      </motion.section>
 
       {/* Footer */}
-      <footer className="container mx-auto px-4 py-8 border-t border-gray-200 dark:border-gray-700">
+      <footer className="relative z-10 container mx-auto px-4 py-8 border-t border-gray-200 dark:border-gray-700">
         <div className="text-center text-gray-600 dark:text-gray-300">
           <p>&copy; 2024 SoloSuite. Built for student entrepreneurs, by student entrepreneurs.</p>
         </div>
