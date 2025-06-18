@@ -5,3 +5,6 @@ We've used keyframes bob and pulse-slow for fluid motions on the website.
 refer to solo_suite/app/globals.css for the changes
 
 as of now the landing page is updated and each of the dashboards open fluidly, will keep adding changes.
+
+the landing page has the heading dynamically filling out with the help of use state and useEffect of react and 
+framer motion and type writers.

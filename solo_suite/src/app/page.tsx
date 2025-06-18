@@ -6,8 +6,17 @@ import { Badge } from "@/components/ui/badge"
 import { Sparkles, Users, Briefcase, ArrowRight, CheckCircle } from "lucide-react"
 import { ModeToggle } from "@/components/theme-toggle"
 import { motion } from "framer-motion"
+import { Typewriter } from "react-simple-typewriter"
+import { useState, useEffect } from 'react'
 
 export default function HomePage() {
+    const [showSubtext, setShowSubtext] = useState(false)
+
+    useEffect(() => {
+      const timer = setTimeout(() => setShowSubtext(true), 3500) // Typing duration
+      return () => clearTimeout(timer)
+    }, [])
+    
   return (
     <div className="relative min-h-screen bg-white dark:bg-gray-900 transition-colors overflow-hidden">
       {/* Animated Blobs Background */}
@@ -48,10 +57,25 @@ export default function HomePage() {
         transition={{ duration: 0.8 }}
       >
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
-            The Ultimate Platform for
-            <span className="text-indigo-600 dark:text-indigo-400"> Student Entrepreneurs</span>
-          </h1>
+          <motion.h1
+          className="text-5xl font-bold text-gray-900 dark:text-white mb-6"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+        >
+          The Ultimate Platform for{" "}
+          <span className="text-indigo-600 dark:text-indigo-400">
+            <Typewriter
+              words={["Student Entrepreneurs"]}
+              loop={1}
+              cursor
+              cursorStyle="_"
+              typeSpeed={70}
+              deleteSpeed={30}
+              delaySpeed={700}
+            />
+          </span>
+        </motion.h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
             Connect talented student creators with clients who need their services. Build your portfolio, grow your
             business, and achieve your entrepreneurial dreams.
@@ -100,13 +124,19 @@ export default function HomePage() {
             features: ["Deadline tracking", "Client communication", "Revenue analytics"]
           }].map(({ Icon, title, description, features }, i) => (
             <motion.div
-              key={title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.2 }}
+            key={title}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: i * 0.2 }}
+          >
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="cursor-pointer"
             >
-              <Card className="hover:shadow-lg transition-shadow border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+
+              <Card className="hover:shadow-xl transition-shadow border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                 <CardHeader>
                   <Icon className="h-12 w-12 mb-4 text-indigo-600 dark:text-indigo-400" />
                   <CardTitle className="text-gray-900 dark:text-white">{title}</CardTitle>
@@ -124,6 +154,8 @@ export default function HomePage() {
                 </CardContent>
               </Card>
             </motion.div>
+          </motion.div>
+
           ))}
         </div>
       </section>
