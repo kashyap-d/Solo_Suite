@@ -2,6 +2,11 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+while you're inside the solo_suite directory run
+
+> npm install
+> npm install framer-motion
+
 First, run the development server:
 
 ```bash
