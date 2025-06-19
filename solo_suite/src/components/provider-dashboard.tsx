@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare } from "lucide-react"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export function ProviderDashboard() {
   return (
@@ -70,6 +71,34 @@ export function ProviderDashboard() {
 
       {/* AI Taskboard */}
       <AITaskboard />
+
+      {/* Portfolio Management */}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Portfolio Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/dashboard/portfolio">
+              <Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700">
+                <Users className="h-4 w-4 mr-2" />
+                Manage Portfolio
+              </Button>
+            </Link>
+            <Button variant="outline" className="w-full sm:w-auto">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              View Public Profile
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground mt-3">
+            Create and manage your professional portfolio to attract clients
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
