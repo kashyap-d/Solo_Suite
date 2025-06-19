@@ -1,11 +1,43 @@
 "use client"
-
+import { useState, useEffect } from "react"
 import { AITaskboard } from "./ai-taskboard"
+import { CalendarExport } from "./calender-export"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare } from "lucide-react"
+import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, FileText } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { supabase, type Task } from "@/lib/supabaseClient"
+import { InvoiceGenerator } from "./invoice-generator"
+import { Button } from "@/components/ui/button"
 
 export function ProviderDashboard() {
+  const [tasks, setTasks] = useState<Task[]>([])
+  const { user } = useAuth()
+
+  useEffect(() => {
+    if (user) {
+      fetchTasks()
+    }
+  }, [user])
+
+  const fetchTasks = async () => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      setTasks(data || [])
+    } catch (error) {
+      console.error("Error fetching tasks:", error)
+    }
+  }
+
+
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
@@ -61,6 +93,28 @@ export function ProviderDashboard() {
 
       {/* AI Taskboard */}
       <AITaskboard />
+      {/* Calendar Export */}
+      <CalendarExport tasks={tasks} />
+
+      {/* Invoice Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Invoice Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <InvoiceGenerator />
+            <Button variant="outline" className="w-full sm:w-auto">
+              <FileText className="h-4 w-4 mr-2" />
+              View Past Invoices
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground mt-3">Create professional PDF invoices for your clients</p>
+        </CardContent>
+      </Card>
 
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
