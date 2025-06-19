@@ -1,0 +1,14 @@
+We have added an client invoice export to pdf. We can also export tasks deadlines to google calender or apple calender.
+
+this update is done on the branch feature/exports
+
+the files are:
+Added:
+src/lib/calender-utils.ts
+src/lib/pdf-utils.ts
+
+src/components/calender-export.tsx
+src/components/invoice-generator.tsx
+
+modified:
+client-dashboards.tsx
