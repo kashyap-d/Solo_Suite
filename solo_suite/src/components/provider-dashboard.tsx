@@ -4,10 +4,19 @@ import { AITaskboard } from "./ai-taskboard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare } from "lucide-react"
+import Link from "next/link"
 
 export function ProviderDashboard() {
   return (
     <div className="space-y-6">
+      {/* portfolio button */}
+      <div className="flex justify-end">
+        <Link href="/dashboard/portfolio">
+          <button className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition cursor-pointer">
+            Manage Portfolio
+          </button>
+        </Link>
+      </div>
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>

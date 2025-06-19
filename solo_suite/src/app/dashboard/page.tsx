@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { ModeToggle } from "@/components/theme-toggle"
 import { AuthGuard } from "@/components/auth-gaurd"
 import { motion } from "framer-motion"
+import { useEffect } from "react";
 
 function DashboardContent() {
   const { userProfile, signOut } = useAuth()
@@ -77,6 +78,19 @@ function DashboardContent() {
 }
 
 export default function DashboardPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/dashboard");
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
   return (
     <AuthGuard requireAuth={true}>
       <DashboardContent />

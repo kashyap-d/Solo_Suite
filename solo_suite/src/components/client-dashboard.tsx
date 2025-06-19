@@ -4,40 +4,34 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Search, Star, MapPin, Clock, Plus, Eye } from "lucide-react"
+import { useEffect, useState } from "react"
+import { supabase, type Portfolio } from "@/lib/supabaseClient"
 
 export function ClientDashboard() {
-  const providers = [
-    {
-      name: "Alex Rodriguez",
-      title: "Full-Stack Developer",
-      rating: 4.9,
-      reviews: 127,
-      location: "San Francisco, CA",
-      hourlyRate: 85,
-      skills: ["React", "Node.js", "Python"],
-      availability: "Available now",
-    },
-    {
-      name: "Sarah Kim",
-      title: "UI/UX Designer",
-      rating: 4.8,
-      reviews: 89,
-      location: "New York, NY",
-      hourlyRate: 75,
-      skills: ["Figma", "Adobe XD", "Prototyping"],
-      availability: "Available in 1 week",
-    },
-    {
-      name: "David Chen",
-      title: "Digital Marketer",
-      rating: 4.7,
-      reviews: 156,
-      location: "Austin, TX",
-      hourlyRate: 65,
-      skills: ["SEO", "Social Media", "Analytics"],
-      availability: "Available now",
-    },
-  ]
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    const fetchPortfolios = async () => {
+      setLoading(true)
+      setError("")
+      const { data, error } = await supabase
+        .from("portfolios")
+        .select("*")
+        .eq("is_available", true)
+        .eq("is_verified", true)
+        .order("created_at", { ascending: false })
+      if (error) {
+        setError("Failed to load portfolios.")
+        setPortfolios([])
+      } else {
+        setPortfolios(data || [])
+      }
+      setLoading(false)
+    }
+    fetchPortfolios()
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -75,41 +69,50 @@ export function ClientDashboard() {
 
       {/* Provider Cards */}
       <div className="grid gap-4">
-        {providers.map((provider, index) => (
-          <Card key={index} className="hover:shadow-md transition-shadow">
+        {loading && <div className="text-center text-muted-foreground py-8">Loading portfolios...</div>}
+        {error && <div className="text-center text-red-500 py-8">{error}</div>}
+        {!loading && !error && portfolios.length === 0 && (
+          <div className="text-center text-muted-foreground py-8">No portfolios found.</div>
+        )}
+        {!loading && !error && portfolios.map((portfolio) => (
+          <Card key={portfolio.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                      {provider.name
+                      {portfolio.title
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">{provider.name}</h3>
-                      <p className="text-muted-foreground">{provider.title}</p>
+                      <h3 className="font-semibold text-lg">{portfolio.title}</h3>
+                      <p className="text-muted-foreground">{portfolio.bio}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 mb-3 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      {provider.rating} ({provider.reviews} reviews)
+                      {portfolio.rating?.toFixed(1) ?? "-"} ({portfolio.reviews_count ?? 0} reviews)
                     </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {provider.location}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {provider.availability}
-                    </div>
+                    {portfolio.location && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {portfolio.location}
+                      </div>
+                    )}
+                    {portfolio.availability && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {portfolio.availability}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {provider.skills.map((skill, skillIndex) => (
+                    {portfolio.skills.map((skill, skillIndex) => (
                       <Badge key={skillIndex} variant="secondary">
                         {skill}
                       </Badge>
@@ -118,7 +121,7 @@ export function ClientDashboard() {
                 </div>
 
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-green-600">${provider.hourlyRate}</p>
+                  <p className="text-2xl font-bold text-green-600">${portfolio.hourly_rate ?? "-"}</p>
                   <p className="text-sm text-muted-foreground">per hour</p>
                   <div className="flex gap-2 mt-3">
                     <Button variant="outline" size="sm">
