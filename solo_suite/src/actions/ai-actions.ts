@@ -525,10 +525,10 @@ export async function generateProjectInsights(tasks: any[]) {
           
           Task details: ${JSON.stringify(tasks.map((t) => ({ title: t.title, status: t.status, priority: t.priority, hours: t.estimated_hours })))}
           
-          Provide project insights:`,
+          Provide project insights, RETURN ONLY JSON:`,
         },
       ],
-      model: "llama3-70b-8192",
+      model: "gemma2-9b-it",
       temperature: 0.6,
       max_tokens: 1536,
     })
