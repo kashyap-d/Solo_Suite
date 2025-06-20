@@ -8,13 +8,24 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 })
 
-export async function debugGenerateTasks(projectDescription: string, userId: string) {
+export async function debugGenerateTasks(
+  projectDescription: string,
+  userId: string,
+  clientName?: string,
+  clientEmail?: string,
+  clientCompany?: string,
+  projectName?: string,
+) {
   const logs: string[] = []
 
   try {
     logs.push("🚀 Starting task generation...")
     logs.push(`📝 Project description: ${projectDescription}`)
     logs.push(`👤 User ID: ${userId}`)
+    logs.push(`🏢 Client: ${clientName || "No client specified"}`)
+    logs.push(`📧 Client Email: ${clientEmail || "No email specified"}`)
+    logs.push(`🏢 Client Company: ${clientCompany || "No company specified"}`)
+    logs.push(`📋 Project Name: ${projectName || "No project name specified"}`)
     logs.push(`🔑 API Key exists: ${!!process.env.GROQ_API_KEY}`)
 
     logs.push("📡 Making Groq API call for task generation...")
@@ -110,6 +121,10 @@ export async function debugGenerateTasks(projectDescription: string, userId: str
         priority: task.priority,
         estimated_hours: Number(task.estimatedHours),
         status: "pending" as const,
+        client_name: clientName || null,
+        client_email: clientEmail || null,
+        client_company: clientCompany || null,
+        project_name: projectName || null,
       }
     })
 
@@ -147,7 +162,14 @@ export async function debugGenerateTasks(projectDescription: string, userId: str
   }
 }
 
-export async function generateTasks(projectDescription: string, userId: string) {
+export async function generateTasks(
+  projectDescription: string,
+  userId: string,
+  clientName?: string,
+  clientEmail?: string,
+  clientCompany?: string,
+  projectName?: string,
+) {
   console.log("🚀 Starting task generation...")
   console.log("📝 Project description:", projectDescription)
   console.log("👤 User ID:", userId)
@@ -247,6 +269,10 @@ export async function generateTasks(projectDescription: string, userId: string) 
         priority: task.priority,
         estimated_hours: Number(task.estimatedHours),
         status: "pending" as const,
+        client_name: clientName || null,
+        client_email: clientEmail || null,
+        client_company: clientCompany || null,
+        project_name: projectName || null,
       }
     })
 
@@ -281,6 +307,10 @@ export async function generateTasks(projectDescription: string, userId: string) 
         priority: "high",
         estimated_hours: 4,
         status: "pending",
+        client_name: clientName || null,
+        client_email: clientEmail || null,
+        client_company: clientCompany || null,
+        project_name: projectName || null,
       },
       {
         user_id: userId,
@@ -289,6 +319,10 @@ export async function generateTasks(projectDescription: string, userId: string) 
         priority: "high",
         estimated_hours: 2,
         status: "pending",
+        client_name: clientName || null,
+        client_email: clientEmail || null,
+        client_company: clientCompany || null,
+        project_name: projectName || null,
       },
       {
         user_id: userId,
@@ -297,6 +331,10 @@ export async function generateTasks(projectDescription: string, userId: string) 
         priority: "medium",
         estimated_hours: 6,
         status: "pending",
+        client_name: clientName || null,
+        client_email: clientEmail || null,
+        client_company: clientCompany || null,
+        project_name: projectName || null,
       },
       {
         user_id: userId,
@@ -305,6 +343,10 @@ export async function generateTasks(projectDescription: string, userId: string) 
         priority: "medium",
         estimated_hours: 3,
         status: "pending",
+        client_name: clientName || null,
+        client_email: clientEmail || null,
+        client_company: clientCompany || null,
+        project_name: projectName || null,
       },
     ]
 
@@ -587,10 +629,10 @@ export async function generateProjectIdeas(industry: string, skills: string[]) {
           Industry: ${industry}
           Available Skills: ${skills.join(", ")}
           
-          Suggest innovative and profitable project ideas:`,
+          Suggest innovative and profitable project ideas AND MAKE SURE YOU ONLY RETURN JSON:`,
         },
       ],
-      model: "llama3-70b-8192",
+      model: "gemma2-9b-it",
       temperature: 0.9,
       max_tokens: 2048,
     })

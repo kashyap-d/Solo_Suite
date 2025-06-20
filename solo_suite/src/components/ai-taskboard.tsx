@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Sparkles,
   Clock,
@@ -38,12 +39,17 @@ import {
   Rocket,
   TestTube,
   Bug,
+  Filter,
+  Users,
+  Building,
+  X,
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, type Task } from "@/lib/supabaseClient"
 
 export function AITaskboard() {
   const [tasks, setTasks] = useState<Task[]>([])
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(false)
   const [suggestions, setSuggestions] = useState<any[]>([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
@@ -58,6 +64,13 @@ export function AITaskboard() {
   const [testLoading, setTestLoading] = useState(false)
   const [debugResult, setDebugResult] = useState<any>(null)
   const [debugLoading, setDebugLoading] = useState(false)
+
+  // Filters
+  const [selectedClient, setSelectedClient] = useState<string>("all")
+  const [selectedProject, setSelectedProject] = useState<string>("all")
+  const [clients, setClients] = useState<Array<{ name: string; email: string; company?: string }>>([])
+  const [projects, setProjects] = useState<string[]>([])
+
   const { user } = useAuth()
 
   useEffect(() => {
@@ -65,6 +78,11 @@ export function AITaskboard() {
       fetchTasks()
     }
   }, [user])
+
+  useEffect(() => {
+    // Update filtered tasks when tasks or filters change
+    filterTasks()
+  }, [tasks, selectedClient, selectedProject])
 
   const fetchTasks = async () => {
     if (!user) return
@@ -78,9 +96,50 @@ export function AITaskboard() {
 
       if (error) throw error
       setTasks(data || [])
+
+      const uniqueClients = Array.from(
+        new Map(
+          (data || [])
+            .filter((task) => task.client_name && task.client_email)
+            .map((task) => [
+              task.client_email,
+              {
+                name: task.client_name!,
+                email: task.client_email!,
+                company: task.client_company || undefined,
+              },
+            ]),
+        ).values(),
+      )
+
+      const uniqueProjects = Array.from(
+        new Set((data || []).filter((task) => task.project_name).map((task) => task.project_name!)),
+      )
+
+      setClients(uniqueClients)
+      setProjects(uniqueProjects)
     } catch (error) {
       console.error("Error fetching tasks:", error)
     }
+  }
+
+  const filterTasks = () => {
+    let filtered = [...tasks]
+
+    if (selectedClient !== "all") {
+      filtered = filtered.filter((task) => task.client_email === selectedClient)
+    }
+
+    if (selectedProject !== "all") {
+      filtered = filtered.filter((task) => task.project_name === selectedProject)
+    }
+
+    setFilteredTasks(filtered)
+  }
+
+  const clearFilters = () => {
+    setSelectedClient("all")
+    setSelectedProject("all")
   }
 
   const handleDebugGenerateTasks = async (formData: FormData) => {
@@ -89,9 +148,20 @@ export function AITaskboard() {
     setDebugLoading(true)
     setDebugResult(null)
     const projectDescription = formData.get("project") as string
+    const clientName = formData.get("clientName") as string
+    const clientEmail = formData.get("clientEmail") as string
+    const clientCompany = formData.get("clientCompany") as string
+    const projectName = formData.get("projectName") as string
 
     try {
-      const result = await debugGenerateTasks(projectDescription, user.id)
+      const result = await debugGenerateTasks(
+        projectDescription,
+        user.id,
+        clientName || undefined,
+        clientEmail || undefined,
+        clientCompany || undefined,
+        projectName || undefined,
+      )
       setDebugResult(result)
 
       if (result.success && result.tasks) {
@@ -134,9 +204,20 @@ export function AITaskboard() {
     setLoading(true)
     setMessage("")
     const projectDescription = formData.get("project") as string
+    const clientName = formData.get("clientName") as string
+    const clientEmail = formData.get("clientEmail") as string
+    const clientCompany = formData.get("clientCompany") as string
+    const projectName = formData.get("projectName") as string
 
     try {
-      const result = await generateTasks(projectDescription, user.id)
+      const result = await generateTasks(
+        projectDescription,
+        user.id,
+        clientName || undefined,
+        clientEmail || undefined,
+        clientCompany || undefined,
+        projectName || undefined,
+      )
       if (result.success && result.tasks) {
         // Append new tasks to existing tasks instead of replacing
         setTasks((prevTasks) => [...result.tasks, ...prevTasks])
@@ -216,11 +297,11 @@ export function AITaskboard() {
   }
 
   const handleGenerateSuggestions = async () => {
-    if (!tasks.length) return
+    if (!filteredTasks.length) return
 
     setLoadingSuggestions(true)
     try {
-      const currentTaskTitles = tasks.map((task) => task.title)
+      const currentTaskTitles = filteredTasks.map((task) => task.title)
       const result = await generateTaskSuggestions(currentTaskTitles, "general project")
 
       if (result.success) {
@@ -234,11 +315,11 @@ export function AITaskboard() {
   }
 
   const handleGenerateInsights = async () => {
-    if (!tasks.length) return
+    if (!filteredTasks.length) return
 
     setLoadingInsights(true)
     try {
-      const result = await generateProjectInsights(tasks)
+      const result = await generateProjectInsights(filteredTasks)
       if (result.success) {
         setInsights(result.insights)
       }
@@ -260,6 +341,10 @@ export function AITaskboard() {
         priority: suggestion.priority,
         estimated_hours: suggestion.estimatedHours,
         status: "pending" as const,
+        client_name: selectedClient !== "all" ? clients.find((c) => c.email === selectedClient)?.name : null,
+        client_email: selectedClient !== "all" ? selectedClient : null,
+        client_company: selectedClient !== "all" ? clients.find((c) => c.email === selectedClient)?.company : null,
+        project_name: selectedProject !== "all" ? selectedProject : null,
       }
 
       const { data, error } = await supabase.from("tasks").insert([taskToInsert]).select()
@@ -287,6 +372,10 @@ export function AITaskboard() {
         priority: "high" as const,
         estimated_hours: 40, // Default estimate for a full project
         status: "pending" as const,
+        client_name: selectedClient !== "all" ? clients.find((c) => c.email === selectedClient)?.name : null,
+        client_email: selectedClient !== "all" ? selectedClient : null,
+        client_company: selectedClient !== "all" ? clients.find((c) => c.email === selectedClient)?.company : null,
+        project_name: selectedProject !== "all" ? selectedProject : null,
       }
 
       const { data, error } = await supabase.from("tasks").insert([mainTask]).select()
@@ -339,15 +428,16 @@ export function AITaskboard() {
     }
   }
 
-  const completedTasks = tasks.filter((task) => task.status === "completed").length
-  const inProgressTasks = tasks.filter((task) => task.status === "in_progress").length
-  const totalHours = tasks.reduce((sum, task) => sum + task.estimated_hours, 0)
-  const completedHours = tasks
+  const completedTasks = filteredTasks.filter((task) => task.status === "completed").length
+  const inProgressTasks = filteredTasks.filter((task) => task.status === "in_progress").length
+  const totalHours = filteredTasks.reduce((sum, task) => sum + task.estimated_hours, 0)
+  const completedHours = filteredTasks
     .filter((task) => task.status === "completed")
     .reduce((sum, task) => sum + task.estimated_hours, 0)
 
   return (
     <div className="space-y-6">
+      
       {/* Debug Section */}
       <Card className="bg-white dark:bg-gray-800 border-2 border-dashed border-orange-300 dark:border-orange-600">
         <CardHeader>
@@ -375,6 +465,55 @@ export function AITaskboard() {
                 className="min-h-[80px] bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
                 required
               />
+            </div>
+            {/* Client Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="debug-clientName" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Client Name
+                </Label>
+                <Input
+                  id="debug-clientName"
+                  name="clientName"
+                  placeholder="John Smith"
+                  className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                />
+              </div>
+              <div>
+                <Label htmlFor="debug-clientEmail">Client Email</Label>
+                <Input
+                  id="debug-clientEmail"
+                  name="clientEmail"
+                  type="email"
+                  placeholder="john@example.com"
+                  className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="debug-clientCompany" className="flex items-center gap-2">
+                  <Building className="h-4 w-4" />
+                  Client Company
+                </Label>
+                <Input
+                  id="debug-clientCompany"
+                  name="clientCompany"
+                  placeholder="Acme Corp"
+                  className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                />
+              </div>
+              <div>
+                <Label htmlFor="debug-projectName">Project Name</Label>
+                <Input
+                  id="debug-projectName"
+                  name="projectName"
+                  placeholder="Website Redesign"
+                  className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                />
+              </div>
             </div>
             <Button
               type="submit"
@@ -492,14 +631,16 @@ export function AITaskboard() {
       </Card>
 
       {/* Enhanced Stats */}
-      {tasks.length > 0 && (
+      {filteredTasks.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-white dark:bg-gray-800">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{tasks.length}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedClient !== "all" || selectedProject !== "all" ? "Filtered" : "Total"} Tasks
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{filteredTasks.length}</p>
                 </div>
                 <Target className="h-8 w-8 text-blue-600" />
               </div>
@@ -536,7 +677,7 @@ export function AITaskboard() {
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Progress</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0}%
+                    {filteredTasks.length > 0 ? Math.round((completedTasks / filteredTasks.length) * 100) : 0}%
                   </p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-purple-600" />
@@ -670,6 +811,55 @@ export function AITaskboard() {
                 required
               />
             </div>
+            {/* Client Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="clientName" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Client Name
+                </Label>
+                <Input
+                  id="clientName"
+                  name="clientName"
+                  placeholder="John Smith"
+                  className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                />
+              </div>
+              <div>
+                <Label htmlFor="clientEmail">Client Email</Label>
+                <Input
+                  id="clientEmail"
+                  name="clientEmail"
+                  type="email"
+                  placeholder="john@example.com"
+                  className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="clientCompany" className="flex items-center gap-2">
+                  <Building className="h-4 w-4" />
+                  Client Company
+                </Label>
+                <Input
+                  id="clientCompany"
+                  name="clientCompany"
+                  placeholder="Acme Corp"
+                  className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                />
+              </div>
+              <div>
+                <Label htmlFor="projectName">Project Name</Label>
+                <Input
+                  id="projectName"
+                  name="projectName"
+                  placeholder="Website Redesign"
+                  className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                />
+              </div>
+            </div>
             <Button
               type="submit"
               disabled={loading}
@@ -699,7 +889,7 @@ export function AITaskboard() {
       </Card>
 
       {/* AI Insights */}
-      {tasks.length > 0 && (
+      {filteredTasks.length > 0 && (
         <Card className="bg-white dark:bg-gray-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -769,7 +959,7 @@ export function AITaskboard() {
       )}
 
       {/* Task Suggestions */}
-      {tasks.length > 0 && (
+      {filteredTasks.length > 0 && (
         <Card className="bg-white dark:bg-gray-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -830,15 +1020,90 @@ export function AITaskboard() {
           </CardContent>
         </Card>
       )}
+      {/* Client and Project Filters */}
+      {(clients.length > 0 || projects.length > 0) && (
+        <Card className="bg-white dark:bg-gray-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5 text-blue-600" />
+              Filter Tasks
+              {(selectedClient !== "all" || selectedProject !== "all") && (
+                <Badge variant="secondary">
+                  {selectedClient !== "all" && selectedProject !== "all"
+                    ? "Client & Project"
+                    : selectedClient !== "all"
+                      ? "Client"
+                      : "Project"}{" "}
+                  Filter Active
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="clientFilter" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Filter by Client
+                </Label>
+                <Select value={selectedClient} onValueChange={setSelectedClient}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All clients" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Clients</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.email} value={client.email}>
+                        {client.name} {client.company && `(${client.company})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="projectFilter" className="flex items-center gap-2">
+                  <Building className="h-4 w-4" />
+                  Filter by Project
+                </Label>
+                <Select value={selectedProject} onValueChange={setSelectedProject}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All projects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Projects</SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project} value={project}>
+                        {project}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-end">
+                {(selectedClient !== "all" || selectedProject !== "all") && (
+                  <Button variant="outline" onClick={clearFilters} className="w-full">
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tasks List */}
-      {tasks.length > 0 && (
+      {filteredTasks.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Your Tasks</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {selectedClient !== "all" || selectedProject !== "all" ? "Filtered Tasks" : "Your Tasks"}
+            </h3>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700">
-                {completedTasks}/{tasks.length} completed
+                {completedTasks}/{filteredTasks.length} completed
               </Badge>
               <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
                 {completedHours}/{totalHours}h done
@@ -846,11 +1111,30 @@ export function AITaskboard() {
             </div>
           </div>
           <div className="grid gap-4">
-            {tasks.map((task) => (
+            {filteredTasks.map((task) => (
               <Card key={task.id} className="hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-lg text-gray-900 dark:text-white">{task.title}</h4>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-lg text-gray-900 dark:text-white">{task.title}</h4>
+                      {(task.client_name || task.project_name) && (
+                        <div className="flex items-center gap-2 mt-1">
+                          {task.client_name && (
+                            <Badge variant="outline" className="text-xs">
+                              <Users className="h-3 w-3 mr-1" />
+                              {task.client_name}
+                              {task.client_company && ` (${task.client_company})`}
+                            </Badge>
+                          )}
+                          {task.project_name && (
+                            <Badge variant="outline" className="text-xs">
+                              <Building className="h-3 w-3 mr-1" />
+                              {task.project_name}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
                       {getStatusIcon(task.status)}
