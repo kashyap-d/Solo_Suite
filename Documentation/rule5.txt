@@ -1,0 +1,2 @@
+made a validation test for invoice pdf
+it is in feature/export branch
