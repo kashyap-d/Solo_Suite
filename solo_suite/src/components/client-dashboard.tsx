@@ -16,6 +16,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 interface PortfolioWithProvider extends Portfolio {
   provider_name: string
@@ -186,7 +187,7 @@ export function ClientDashboard() {
                         <h4 className="font-semibold text-lg text-indigo-600 dark:text-indigo-400 mb-2">
                           {portfolio.title}
                         </h4>
-                        <p className="text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                        <p className="text-gray-600 dark:text-gray-300 line-clamp-1 leading-relaxed">
                           {portfolio.bio}
                         </p>
                       </div>
@@ -258,10 +259,12 @@ export function ClientDashboard() {
                     </div>
 
                     <div className="space-y-3">
-                      <Button className="w-full bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg rounded-xl py-3 transition-all duration-300">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Profile
-                      </Button>
+                      <Link href={`/portfolio/${portfolio.id}`}>
+                        <Button className="w-full bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg rounded-xl py-3 transition-all duration-300">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Full Portfolio
+                        </Button>
+                      </Link>
                       <Button
                         variant="outline"
                         className="w-full border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl py-3 font-semibold transition-all duration-300 hover:scale-105"
