@@ -1,14 +1,10 @@
 "use client"
-<<<<<<< HEAD
-=======
 
->>>>>>> 3e53dafb80726ec59b10fc0ddefd2513b607d481
 import { useState, useEffect } from "react"
 import { AITaskboard } from "./ai-taskboard"
 import { CalendarExport } from "./calender-export"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-<<<<<<< HEAD
 import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, Eye, FileText } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
@@ -18,12 +14,6 @@ import { Button } from "@/components/ui/button"
 
 export function ProviderDashboard() {
   const [tasks, setTasks] = useState<Task[]>([])
-=======
-import { Briefcase, DollarSign, Users, Calendar, MessageSquare } from "lucide-react"
-import { useAuth } from "@/contexts/auth-context"
-import { supabase } from "@/lib/supabaseClient"
-
-export function ProviderDashboard() {
   const [stats, setStats] = useState({
     activeProjects: 0,
     totalClients: 0,
@@ -31,13 +21,12 @@ export function ProviderDashboard() {
   })
   const [loading, setLoading] = useState(true)
 
->>>>>>> 3e53dafb80726ec59b10fc0ddefd2513b607d481
   const { user } = useAuth()
 
   useEffect(() => {
     if (user) {
-<<<<<<< HEAD
       fetchTasks()
+      fetchDashboardStats()
     }
   }, [user])
 
@@ -57,12 +46,6 @@ export function ProviderDashboard() {
       console.error("Error fetching tasks:", error)
     }
   }
-
-
-=======
-      fetchDashboardStats()
-    }
-  }, [user])
 
   const fetchDashboardStats = async () => {
     if (!user) return
@@ -107,7 +90,6 @@ export function ProviderDashboard() {
     }
   }
 
->>>>>>> 3e53dafb80726ec59b10fc0ddefd2513b607d481
   return (
     <div className="space-y-6">
       {/* portfolio button */}
@@ -174,7 +156,6 @@ export function ProviderDashboard() {
       <AITaskboard />
 
       {/* Portfolio Management */}
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -198,83 +179,36 @@ export function ProviderDashboard() {
             </Link>
           </div>
           <p className="text-sm text-muted-foreground mt-3">
-            Create and manage your professional portfolio to attract clients
+            Manage your professional portfolio and showcase your work to potential clients.
           </p>
         </CardContent>
       </Card>
-      {/* Calendar Export */}
-      <CalendarExport tasks={tasks} />
 
-      {/* Invoice Management */}
+      {/* Invoice Generator */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <FileText className="h-5 w-5" />
             Invoice Management
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <InvoiceGenerator />
-          </div>
-          <p className="text-sm text-muted-foreground mt-3">Create professional PDF invoices for your clients</p>
+          <InvoiceGenerator />
         </CardContent>
       </Card>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Upcoming Deadlines
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950 rounded-lg">
-              <div>
-                <p className="font-medium">Website Redesign</p>
-                <p className="text-sm text-muted-foreground">Due in 2 days</p>
-              </div>
-              <Badge variant="destructive">Urgent</Badge>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
-              <div>
-                <p className="font-medium">Logo Design</p>
-                <p className="text-sm text-muted-foreground">Due in 5 days</p>
-              </div>
-              <Badge variant="secondary">Medium</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Recent Messages
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="p-3 border rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <p className="font-medium">Sarah Johnson</p>
-                <p className="text-xs text-muted-foreground">2 hours ago</p>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Great work on the initial designs! Can we schedule a call?
-              </p>
-            </div>
-            <div className="p-3 border rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <p className="font-medium">Mike Chen</p>
-                <p className="text-xs text-muted-foreground">1 day ago</p>
-              </div>
-              <p className="text-sm text-muted-foreground">The project timeline looks perfect. Let's proceed!</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Calendar Export */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Calendar Integration
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CalendarExport tasks={tasks} />
+        </CardContent>
+      </Card>
     </div>
   )
 }
