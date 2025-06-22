@@ -3,7 +3,7 @@
 import { AITaskboard } from "./ai-taskboard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, Eye } from "lucide-react"
+import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, Eye, FileText } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -11,11 +11,23 @@ export function ProviderDashboard() {
   return (
     <div className="space-y-6">
       {/* portfolio button */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-4">
         <Link href="/dashboard/portfolio">
-          <button className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition cursor-pointer">
+          <Button className="bg-indigo-600 hover:bg-indigo-700">
             Manage Portfolio
-          </button>
+          </Button>
+        </Link>
+        <Link href="/dashboard/jobs-marketplace">
+          <Button variant="outline">
+            <Briefcase className="h-4 w-4 mr-2" />
+            View Current Jobs
+          </Button>
+        </Link>
+        <Link href="/dashboard/my-applications">
+          <Button variant="outline">
+            <FileText className="h-4 w-4 mr-2" />
+            My Applications
+          </Button>
         </Link>
       </div>
       {/* Stats Overview */}
