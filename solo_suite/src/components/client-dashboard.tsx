@@ -258,7 +258,7 @@ export function ClientDashboard() {
                       <p className="text-sm text-gray-500 dark:text-gray-400">per hour</p>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <Link href={`/portfolio/${portfolio.id}`}>
                         <Button className="w-full bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg rounded-xl py-3 transition-all duration-300">
                           <Eye className="h-4 w-4 mr-2" />
