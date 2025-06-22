@@ -2,7 +2,8 @@
 
 // import { generateText } from "ai"
 // import { openai } from "@ai-sdk/openai"
-import { supabase } from "@/lib/supabaseClient"
+import { supabase, supabaseAdmin } from "@/lib/supabaseClient"
+import type { Invoice } from "@/lib/supabaseClient"
 
 export async function generateTasks(projectDescription: string, userId: string) {
 //   try {
@@ -44,5 +45,82 @@ export async function updateTaskStatus(taskId: string, status: "pending" | "in_p
     return { success: true }
   } catch (error) {
     return { success: false, message: "Failed to update task" }
+  }
+}
+
+// Invoice Actions - Using admin client to bypass RLS, fallback to regular client
+export async function saveInvoice(invoiceData: any, userId: string) {
+  try {
+    const invoiceToInsert = {
+      user_id: userId,
+      invoice_number: invoiceData.invoiceNumber,
+      invoice_date: invoiceData.invoiceDate.toISOString(),
+      due_date: invoiceData.dueDate.toISOString(),
+      provider: invoiceData.provider,
+      client: invoiceData.client,
+      items: invoiceData.items,
+      subtotal: invoiceData.subtotal,
+      tax: invoiceData.tax,
+      total: invoiceData.total,
+      notes: invoiceData.notes,
+      payment_terms: invoiceData.paymentTerms,
+      status: "draft" as const,
+    }
+
+    // Use admin client if available, otherwise use regular client
+    const client = supabaseAdmin || supabase
+    const { data, error } = await client.from("invoices").insert([invoiceToInsert]).select()
+
+    if (error) throw error
+
+    return { success: true, invoice: data[0] }
+  } catch (error) {
+    console.error("Error saving invoice:", error)
+    return { success: false, message: "Failed to save invoice" }
+  }
+}
+
+export async function getInvoices(userId: string) {
+  try {
+    // Use admin client if available, otherwise use regular client
+    const client = supabaseAdmin || supabase
+    const { data, error } = await client
+      .from("invoices")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+
+    if (error) throw error
+
+    return { success: true, invoices: data }
+  } catch (error) {
+    console.error("Error fetching invoices:", error)
+    return { success: false, message: "Failed to fetch invoices" }
+  }
+}
+
+export async function updateInvoiceStatus(invoiceId: string, status: "draft" | "sent" | "paid" | "overdue") {
+  try {
+    // Use admin client if available, otherwise use regular client
+    const client = supabaseAdmin || supabase
+    const { error } = await client.from("invoices").update({ status }).eq("id", invoiceId)
+
+    if (error) throw error
+    return { success: true }
+  } catch (error) {
+    return { success: false, message: "Failed to update invoice status" }
+  }
+}
+
+export async function deleteInvoice(invoiceId: string) {
+  try {
+    // Use admin client if available, otherwise use regular client
+    const client = supabaseAdmin || supabase
+    const { error } = await client.from("invoices").delete().eq("id", invoiceId)
+
+    if (error) throw error
+    return { success: true }
+  } catch (error) {
+    return { success: false, message: "Failed to delete invoice" }
   }
 }

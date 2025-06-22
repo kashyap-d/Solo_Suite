@@ -107,10 +107,6 @@ export function ProviderDashboard() {
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
             <InvoiceGenerator />
-            <Button variant="outline" className="w-full sm:w-auto">
-              <FileText className="h-4 w-4 mr-2" />
-              View Past Invoices
-            </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-3">Create professional PDF invoices for your clients</p>
         </CardContent>
