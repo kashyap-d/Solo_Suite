@@ -3,7 +3,7 @@
 import { AITaskboard } from "./ai-taskboard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare } from "lucide-react"
+import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, Eye } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -89,10 +89,12 @@ export function ProviderDashboard() {
                 Manage Portfolio
               </Button>
             </Link>
-            <Button variant="outline" className="w-full sm:w-auto">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              View Public Profile
-            </Button>
+            <Link href="/dashboard/view-portfolio">
+              <Button variant="outline" className="w-full sm:w-auto">
+                <Eye className="h-4 w-4 mr-2" />
+                View Public Profile
+              </Button>
+            </Link>
           </div>
           <p className="text-sm text-muted-foreground mt-3">
             Create and manage your professional portfolio to attract clients
