@@ -7,11 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, Eye, FileText } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, FileText } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, type Task } from "@/lib/supabaseClient"
 import { InvoiceGenerator } from "./invoice-generator"
-import { Button } from "@/components/ui/button"
 
 export function ProviderDashboard() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -45,11 +43,6 @@ export function ProviderDashboard() {
     <div className="space-y-6">
       {/* portfolio button */}
       <div className="flex justify-end gap-4">
-        <Link href="/dashboard/portfolio">
-          <Button className="bg-indigo-600 hover:bg-indigo-700">
-            Manage Portfolio
-          </Button>
-        </Link>
         <Link href="/dashboard/jobs-marketplace">
           <Button variant="outline">
             <Briefcase className="h-4 w-4 mr-2" />
