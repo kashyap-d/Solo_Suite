@@ -95,16 +95,7 @@ A duo of tech enthusiasts building meaningful productivity tools.
 
 ## 🔁 Workflow Explanation
 
-```mermaid
-graph TD
-    A[Client/Provider Login] --> B[Role-Based Dashboard]
-    B --> C[Smart Taskboard]
-    B --> D[Portfolio Showcase]
-    B --> E[Client Requests]
-    E --> F["Request Analyzer (AI)"]
-    C --> G["AI Schedule Optimizer"]
-    G --> H["Weekly Plan & Todos"]
-```
+<pre><code>```mermaid graph TD %% Entry Point A[🔐 Dual Login System] --> B[👤 Provider Dashboard] A --> C[🧑‍💼 Client Dashboard] %% Provider Side Features B --> B1[🧠 Smart Taskboard] B1 --> B1a[📝 Generate Tasks] B1 --> B1b[💡 Task Suggestions] B1 --> B1c[📊 Progress Insights] B --> B2[🧾 Export Features] B2 --> B2a[📅 Export to Calendar] B2 --> B2b[📄 Export Invoices to PDF] B --> B3[💼 Portfolio Showcase] B --> B4[🌐 Find Jobs in Marketplace] %% Client Side Features C --> C1[📢 Post Jobs] C --> C2[✅ Accept Requests] C --> C3[🔍 Search Providers] ``` </code></pre>
 
 ---
 
@@ -113,18 +104,9 @@ graph TD
 - [Supabase](https://supabase.com/)
 - [Next.js](https://nextjs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
-- [Gemini API](https://ai.google.dev/gemini-api)
+- [Groq API](https://console.groq.com/keys)
 - [ShadCN UI](https://ui.shadcn.com/)
 
 ---
 
-## ✅ Current Status
 
-- Core layout and routing set up ✅  
-- Supabase auth integration in progress ⏳  
-- Taskboard, dashboard and client request module – under development 🛠  
-- AI modules integration planned ⚙️
-
----
-
-> _This README will evolve as the project grows. Stay tuned!_
