@@ -4,7 +4,8 @@ import { AITaskboard } from "./ai-taskboard"
 import { CalendarExport } from "./calender-export"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, FileText } from "lucide-react"
+import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, Eye, FileText } from "lucide-react"
+import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, type Task } from "@/lib/supabaseClient"
 import { InvoiceGenerator } from "./invoice-generator"
@@ -40,6 +41,26 @@ export function ProviderDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* portfolio button */}
+      <div className="flex justify-end gap-4">
+        <Link href="/dashboard/portfolio">
+          <Button className="bg-indigo-600 hover:bg-indigo-700">
+            Manage Portfolio
+          </Button>
+        </Link>
+        <Link href="/dashboard/jobs-marketplace">
+          <Button variant="outline">
+            <Briefcase className="h-4 w-4 mr-2" />
+            View Current Jobs
+          </Button>
+        </Link>
+        <Link href="/dashboard/my-applications">
+          <Button variant="outline">
+            <FileText className="h-4 w-4 mr-2" />
+            My Applications
+          </Button>
+        </Link>
+      </div>
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -93,6 +114,36 @@ export function ProviderDashboard() {
 
       {/* AI Taskboard */}
       <AITaskboard />
+
+      {/* Portfolio Management */}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Portfolio Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/dashboard/portfolio">
+              <Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700">
+                <Users className="h-4 w-4 mr-2" />
+                Manage Portfolio
+              </Button>
+            </Link>
+            <Link href="/dashboard/view-portfolio">
+              <Button variant="outline" className="w-full sm:w-auto">
+                <Eye className="h-4 w-4 mr-2" />
+                View Public Profile
+              </Button>
+            </Link>
+          </div>
+          <p className="text-sm text-muted-foreground mt-3">
+            Create and manage your professional portfolio to attract clients
+          </p>
+        </CardContent>
+      </Card>
       {/* Calendar Export */}
       <CalendarExport tasks={tasks} />
 
