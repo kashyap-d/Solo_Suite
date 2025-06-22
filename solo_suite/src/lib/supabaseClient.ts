@@ -33,6 +33,10 @@ export interface Task {
     priority: "high" | "medium" | "low"
     status: "pending" | "in_progress" | "completed"
     estimated_hours: number
+    client_name?: string
+    client_email?: string
+    client_company?: string
+    project_name?: string
     created_at: string
   }
 
