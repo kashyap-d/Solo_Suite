@@ -6,14 +6,29 @@
 
 ## 🧠 Project Description
 
-**Solo Suite** is a compact digital toolkit designed to streamline the daily operations of solo creators and student entrepreneurs. It brings together invoicing, portfolio management, task boards, and AI-driven planning in one seamless platform. Whether you’re finding clients or managing projects, Solo Suite helps you do it smarter — not harder.
+**Solo Suite** is an AI-powered productivity and collaboration platform built with Next.js and React. It enables service providers and clients to manage tasks, post jobs, showcase portfolios, export invoices, and collaborate seamlessly — all in one unified workspace.
 
 ### 💡 How We Solve the Problem
 
-- 🔄 Eliminates the need for multiple disjointed tools (e.g., Trello, Google Docs, invoicing apps).
-- 🧭 Consolidates core workflows in a single interface.
-- 🕒 Saves time with automation and intelligent scheduling.
-- 🌐 Enables providers to find new clients and manage requests effectively.
+- **🎯 Dual-role Access System**  
+   Offers separate, role-specific dashboards for **Service Providers** and **Clients**, ensuring personalized experiences and relevant tools for each.
+- **🧠 Smart AI Taskboard**  
+   Enables providers to generate tasks from brief descriptions, receive intelligent suggestions, and gain actionable progress insights — powered by integrated AI.
+
+- **🤝 Simplified Client-Provider Workflow**  
+   Clients can easily post jobs, accept proposals, and search for providers, making collaboration fast, transparent, and centralized.
+
+- **💼 Portfolio Showcase**  
+   Providers can build and display their portfolio to attract new clients and stand out in the integrated marketplace.
+
+- **📅 Export Capabilities**  
+   Tasks can be exported to calendar apps, and invoices can be downloaded as PDFs — making organization and billing seamless.
+
+- **🌐 Built-in Job Marketplace**  
+   Helps providers discover and apply for new opportunities without leaving the platform.
+
+- **⚙️ AI-powered Productivity Tools**  
+   Features like AI-generated to-dos, smart scheduling, and email assistance enhance daily operations and reduce manual work.
 
 ---
 
@@ -39,7 +54,7 @@
 - PostgreSQL (via Supabase)
 
 ### AI Features
-- Gemini APIs (for intelligent text analysis, task/todo generation)
+- Groq APIs (for intelligent text analysis, task/todo generation)
 
 ---
 
@@ -58,14 +73,29 @@
    npm install
    ```
 
-3. **Run the development server**  
+3. **Set Up Environment Variables**
+   ``` 
+   touch .env.local
+
+   Supabase
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_K   =your_supabase_anon_key
+
+   # OpenAI or other AI provider (if used)
+   OPENAI_API_KEY=your_openai_key
+
+   # Optional: AI provider switch
+   MODEL_PROVIDER=openai # or gemini, groq, etc.
+
+   ```
+
+4. **Run the development server**  
    ```bash
    npm run dev
    ```
 
 4. **(Optional)** Set up your Supabase project and environment variables.
 
-> More detailed setup documentation will be added soon.
 
 ---
 
@@ -73,11 +103,12 @@
 
 > A minimal list for now (auto-generated in package.json, to be finalized):
 
-- `react`, `next`, `typescript`, `tailwindcss`  
+- `react`, `nextjs`, `typescript`, `tailwindcss`  
 - `@shadcn/ui`  
 - `@supabase/supabase-js`  
 - `lucide-react`  
 - `dotenv` (for local env config)
+- `Groq AI`
 
 ---
 
@@ -95,7 +126,31 @@ A duo of tech enthusiasts building meaningful productivity tools.
 
 ## 🔁 Workflow Explanation
 
-<pre><code>```mermaid graph TD %% Entry Point A[🔐 Dual Login System] --> B[👤 Provider Dashboard] A --> C[🧑‍💼 Client Dashboard] %% Provider Side Features B --> B1[🧠 Smart Taskboard] B1 --> B1a[📝 Generate Tasks] B1 --> B1b[💡 Task Suggestions] B1 --> B1c[📊 Progress Insights] B --> B2[🧾 Export Features] B2 --> B2a[📅 Export to Calendar] B2 --> B2b[📄 Export Invoices to PDF] B --> B3[💼 Portfolio Showcase] B --> B4[🌐 Find Jobs in Marketplace] %% Client Side Features C --> C1[📢 Post Jobs] C --> C2[✅ Accept Requests] C --> C3[🔍 Search Providers] ``` </code></pre>
+```mermaid
+graph TD
+
+%% Entry Point
+A[🔐 Dual Login System] --> B[👤 Provider Dashboard]
+A --> C[🧑‍💼 Client Dashboard]
+
+%% Provider Side Features
+B --> B1[🧠 Smart Taskboard]
+B1 --> B1a[📝 Generate Tasks]
+B1 --> B1b[💡 Task Suggestions]
+B1 --> B1c[📊 Progress Insights]
+
+B --> B2[🧾 Export Features]
+B2 --> B2a[📅 Export to Calendar]
+B2 --> B2b[📄 Export Invoices to PDF]
+
+B --> B3[💼 Portfolio Showcase]
+B --> B4[🌐 Find Jobs in Marketplace]
+
+%% Client Side Features
+C --> C1[📢 Post Jobs]
+C --> C2[✅ Accept Requests]
+C --> C3[🔍 Search Providers]
+```
 
 ---
 
