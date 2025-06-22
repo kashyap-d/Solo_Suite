@@ -29,7 +29,7 @@ export const sendJobPostConfirmationEmail = async (
       from: fromEmail,
       to,
       subject: "Your Job Posting is Live!",
-      html: emailHtml,
+      html: await emailHtml,
     });
   } catch (error) {
     console.error("Error sending job post confirmation email:", error);
@@ -56,7 +56,7 @@ export const sendApplicationConfirmationEmail = async (
       from: fromEmail,
       to,
       subject: "Application Received!",
-      html: emailHtml,
+      html: await emailHtml,
     });
   } catch (error) {
     console.error("Error sending application confirmation email:", error);
@@ -84,7 +84,7 @@ export const sendNewApplicationAlertEmail = async (
       from: fromEmail,
       to,
       subject: "New Application for Your Job Posting!",
-      html: emailHtml,
+      html: await emailHtml,
     });
   } catch (error) {
     console.error("Error sending new application alert email:", error);
@@ -112,7 +112,7 @@ export const sendApplicationAcceptedEmail = async (
       from: fromEmail,
       to,
       subject: "Congratulations! Your Application was Accepted!",
-      html: emailHtml,
+      html: await emailHtml,
     });
   } catch (error) {
     console.error("Error sending application accepted email:", error);
