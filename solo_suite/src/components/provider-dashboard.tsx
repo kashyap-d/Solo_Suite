@@ -43,11 +43,6 @@ export function ProviderDashboard() {
     <div className="space-y-6">
       {/* portfolio button */}
       <div className="flex justify-end gap-4">
-        <Link href="/dashboard/portfolio">
-          <Button className="bg-indigo-600 hover:bg-indigo-700">
-            Manage Portfolio
-          </Button>
-        </Link>
         <Link href="/dashboard/jobs-marketplace">
           <Button variant="outline">
             <Briefcase className="h-4 w-4 mr-2" />
