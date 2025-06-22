@@ -178,7 +178,7 @@ function ApplyJobContent() {
       // Send emails
       if (applicationData) {
         // Email to provider
-        if(user?.email) {
+        if (user?.email) {
           await sendApplicationConfirmationEmail(
             user.email,
             user.user_metadata.name || "Freelancer",
@@ -188,23 +188,24 @@ function ApplyJobContent() {
         }
 
         // Email to client
-        const { data: clientData, error: clientError } = await supabase
-          .from('profiles')
-          .select('email, name')
-          .eq('id', job?.client_id)
-          .single()
+        if (job?.client_id) {
+            const { data: clientData, error: clientError } = await supabase
+              .from('profiles')
+              .select('email, name')
+              .eq('id', job.client_id)
+              .single()
 
-        if (clientError) {
-          // Log the error but don't block the user flow
-          console.error("Error fetching client email:", clientError)
-        } else if (clientData?.email) {
-          await sendNewApplicationAlertEmail(
-            clientData.email,
-            clientData.name || "Client",
-            job?.title || "",
-            user?.user_metadata?.name || "a freelancer",
-            `/dashboard/my-jobs/${job?.id}/applications`
-          )
+            if (clientError) {
+              console.error("Error fetching client email:", clientError)
+            } else if (clientData?.email) {
+              await sendNewApplicationAlertEmail(
+                clientData.email,
+                clientData.name || "Client",
+                job?.title || "",
+                user?.user_metadata?.name || "a freelancer",
+                `/dashboard/my-jobs/${job?.id}/applications`
+              )
+            }
         }
       }
 
