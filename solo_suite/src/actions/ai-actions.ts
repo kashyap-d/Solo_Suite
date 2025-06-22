@@ -527,3 +527,48 @@ export async function deleteInvoice(invoiceId: string) {
     return { success: false, message: "Failed to delete invoice" }
   }
 }
+
+export async function deleteJob(jobId: string, userId: string) {
+  const client = supabaseAdmin || supabase
+  try {
+    // First, delete all applications for the job
+    await client
+      .from("job_applications")
+      .delete()
+      .eq("job_id", jobId)
+
+    // Then, delete the job itself, ensuring the user owns it
+    const { error: jobError } = await client
+      .from("jobs")
+      .delete()
+      .eq("id", jobId)
+      .eq("client_id", userId)
+
+    if (jobError) {
+      throw jobError
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, message: error.message }
+  }
+}
+
+export async function updateJob(jobId: string, userId: string, jobData: any) {
+  const client = supabaseAdmin || supabase
+  try {
+    const { error } = await client
+      .from("jobs")
+      .update(jobData)
+      .eq("id", jobId)
+      .eq("client_id", userId)
+
+    if (error) {
+      throw error
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, message: error.message }
+  }
+}

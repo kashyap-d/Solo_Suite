@@ -18,10 +18,21 @@ import {
   Calendar,
   Send,
   Edit,
-  FileText
+  FileText,
+  Trash
 } from "lucide-react"
 import { AuthGuard } from "@/components/auth-gaurd"
 import Link from "next/link"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { deleteJob } from "@/actions/ai-actions"
+import { toast } from "sonner"
 
 interface JobWithClient extends Job {
   client_name: string
@@ -59,6 +70,8 @@ function JobDetailsContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [isOwner, setIsOwner] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const fetchJob = useCallback(async () => {
     setLoading(true)
@@ -102,6 +115,19 @@ function JobDetailsContent() {
     fetchJob();
   }, [jobId, user, fetchJob])
 
+  const handleDeleteJob = async () => {
+    if (!job || !user) return
+    setIsDeleting(true)
+    const result = await deleteJob(job.id, user.id)
+    if (result.success) {
+      toast.success("Job deleted successfully")
+      router.push("/dashboard")
+    } else {
+      toast.error("Failed to delete job", { description: result.message })
+      setIsDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -144,15 +170,20 @@ function JobDetailsContent() {
     if (isOwner) {
       return (
         <div className="flex gap-3">
+          <Link href={`/dashboard/my-jobs/${job.id}/edit`}>
+            <Button
+              variant="outline"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Job
+            </Button>
+          </Link>
           <Button
-            variant="outline"
-            onClick={() => {
-              // TODO: Implement edit job functionality
-              alert("Edit functionality to be implemented.")
-            }}
+            variant="destructive"
+            onClick={() => setShowDeleteDialog(true)}
           >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Job
+            <Trash className="h-4 w-4 mr-2" />
+            Delete Job
           </Button>
           <Link href={`/dashboard/my-jobs/${job.id}/applications`}>
             <Button className="bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg transition-all duration-300">
@@ -167,6 +198,25 @@ function JobDetailsContent() {
   }
 
   return (
+    <>
+    <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Are you sure you want to delete this job?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the job and all its applications.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteJob} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -275,6 +325,7 @@ function JobDetailsContent() {
         </div>
       </div>
     </div>
+    </>
   )
 }
 
