@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   generateTasks,
   updateTaskStatus,
@@ -57,6 +58,7 @@ export function AITaskboard() {
   const [loadingIdeas, setLoadingIdeas] = useState(false)
   const [expandedTask, setExpandedTask] = useState<string | null>(null)
   const [taskBreakdowns, setTaskBreakdowns] = useState<{ [key: string]: any[] }>({})
+  const [collapsedTasks, setCollapsedTasks] = useState<Set<string>>(new Set())
   const [message, setMessage] = useState("")
   const [testResult, setTestResult] = useState<any>(null)
   const [testLoading, setTestLoading] = useState(false)
@@ -66,8 +68,25 @@ export function AITaskboard() {
   // Filters
   const [selectedClient, setSelectedClient] = useState<string>("all")
   const [selectedProject, setSelectedProject] = useState<string>("all")
+  const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  const [selectedPriority, setSelectedPriority] = useState<string>("all")
   const [clients, setClients] = useState<Array<{ name: string; email: string; company?: string }>>([])
   const [projects, setProjects] = useState<string[]>([])
+
+  // Manual Task Creation
+  const [showManualTaskForm, setShowManualTaskForm] = useState(false)
+  const [manualTaskLoading, setManualTaskLoading] = useState(false)
+  const [selectedClientForTask, setSelectedClientForTask] = useState<string>("")
+
+  // Tasks List Collapse
+  const [isTasksListCollapsed, setIsTasksListCollapsed] = useState(false)
+
+  // Insights and Suggestions Collapse
+  const [isInsightsCollapsed, setIsInsightsCollapsed] = useState(false)
+  const [isSuggestionsCollapsed, setIsSuggestionsCollapsed] = useState(false)
+
+  // Project Ideas Collapse
+  const [isProjectIdeasCollapsed, setIsProjectIdeasCollapsed] = useState(false)
 
   const { user } = useAuth()
 
@@ -80,7 +99,7 @@ export function AITaskboard() {
   useEffect(() => {
     // Update filtered tasks when tasks or filters change
     filterTasks()
-  }, [tasks, selectedClient, selectedProject])
+  }, [tasks, selectedClient, selectedProject, selectedStatus, selectedPriority])
 
   const fetchTasks = async () => {
     if (!user) return
@@ -132,13 +151,120 @@ export function AITaskboard() {
       filtered = filtered.filter((task) => task.project_name === selectedProject)
     }
 
+    if (selectedStatus !== "all") {
+      filtered = filtered.filter((task) => task.status === selectedStatus)
+    }
+
+    if (selectedPriority !== "all") {
+      filtered = filtered.filter((task) => task.priority === selectedPriority)
+    }
+
     setFilteredTasks(filtered)
   }
 
   const clearFilters = () => {
     setSelectedClient("all")
     setSelectedProject("all")
+    setSelectedStatus("all")
+    setSelectedPriority("all")
   }
+
+  const toggleTaskCollapse = (taskId: string) => {
+    setCollapsedTasks(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId)
+      } else {
+        newSet.add(taskId)
+      }
+      return newSet
+    })
+  }
+
+  const collapseAllTasks = () => {
+    setCollapsedTasks(new Set(filteredTasks.map(task => task.id)))
+  }
+
+  const expandAllTasks = () => {
+    setCollapsedTasks(new Set())
+  }
+
+  const toggleTasksListCollapse = () => {
+    setIsTasksListCollapsed(prev => !prev)
+  }
+
+  const toggleInsightsCollapse = () => {
+    setIsInsightsCollapsed(prev => !prev)
+  }
+
+  const toggleSuggestionsCollapse = () => {
+    setIsSuggestionsCollapsed(prev => !prev)
+  }
+
+  const toggleProjectIdeasCollapse = () => {
+    setIsProjectIdeasCollapsed(prev => !prev)
+  }
+
+  const handleManualTaskCreation = async (formData: FormData) => {
+    if (!user) return
+
+    setManualTaskLoading(true)
+    setMessage("")
+
+    const title = formData.get("title") as string
+    const description = formData.get("description") as string
+    const priority = formData.get("priority") as "high" | "medium" | "low"
+    const estimatedHours = Number(formData.get("estimatedHours"))
+    const clientEmail = formData.get("clientEmail") as string
+    const projectName = formData.get("projectName") as string
+
+    try {
+      // Find client details if client email is provided
+      let clientName = ""
+      let clientCompany = ""
+      if (clientEmail && clientEmail !== "new" && clientEmail !== "none") {
+        const client = clients.find(c => c.email === clientEmail)
+        if (client) {
+          clientName = client.name
+          clientCompany = client.company || ""
+        }
+      } else if (clientEmail === "new") {
+        clientName = formData.get("newClientName") as string
+        clientCompany = formData.get("newClientCompany") as string
+      }
+
+      const newTask = {
+        user_id: user.id,
+        title: title.trim(),
+        description: description.trim(),
+        priority,
+        estimated_hours: estimatedHours,
+        status: "pending" as const,
+        client_name: clientName || null,
+        client_email: clientEmail !== "new" && clientEmail !== "none" ? clientEmail : null,
+        client_company: clientCompany || null,
+        project_name: projectName || null,
+      }
+
+      const { data, error } = await supabase.from("tasks").insert([newTask]).select()
+
+      if (error) throw error
+
+      // Add new task to the beginning of the list
+      setTasks(prevTasks => [data[0], ...prevTasks])
+      setMessage("Task created successfully!")
+      setShowManualTaskForm(false)
+      
+      // Reset form
+      setSelectedClientForTask("")
+    } catch (error) {
+      console.error("Error creating task:", error)
+      setMessage("Failed to create task. Please try again.")
+    } finally {
+      setManualTaskLoading(false)
+    }
+  }
+
   const handleGenerateTasks = async (formData: FormData) => {
     if (!user) return
 
@@ -363,9 +489,29 @@ export function AITaskboard() {
       case "completed":
         return <CheckCircle className="h-4 w-4 text-green-600" />
       case "in_progress":
-        return <Play className="h-4 w-4 text-blue-600" />
-      default:
+        return <Play className="h-4 w-4 text-orange-600" />
+      case "pending":
         return <Pause className="h-4 w-4 text-gray-400" />
+    }
+  }
+
+  const getStatusDistribution = () => {
+    const total = filteredTasks.length
+    if (total === 0) return { pending: 0, inProgress: 0, completed: 0, percentages: { pending: 0, inProgress: 0, completed: 0 } }
+
+    const pending = filteredTasks.filter(task => task.status === "pending").length
+    const inProgress = filteredTasks.filter(task => task.status === "in_progress").length
+    const completed = filteredTasks.filter(task => task.status === "completed").length
+
+    return {
+      pending,
+      inProgress,
+      completed,
+      percentages: {
+        pending: Math.round((pending / total) * 100),
+        inProgress: Math.round((inProgress / total) * 100),
+        completed: Math.round((completed / total) * 100)
+      }
     }
   }
 
@@ -438,13 +584,26 @@ export function AITaskboard() {
       {/* Project Ideas Generator */}
       <Card className="bg-white dark:bg-gray-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Rocket className="h-5 w-5 text-orange-600" />
-            Project Ideas Generator
-            <Badge className="bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">
-              Powered by Groq SDK
-            </Badge>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Rocket className="h-5 w-5 text-orange-600" />
+              Project Ideas Generator
+            </CardTitle>
+            {projectIdeas.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleProjectIdeasCollapse}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                {isProjectIdeasCollapsed ? (
+                  <ChevronRight className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+          </div>
           <CardDescription className="text-gray-600 dark:text-gray-300">
             Get AI-generated project ideas based on your industry and skills
           </CardDescription>
@@ -496,40 +655,82 @@ export function AITaskboard() {
             </Button>
           </form>
 
-          {projectIdeas.length > 0 && (
-            <div className="mt-6 space-y-4">
-              <h4 className="font-medium text-gray-900 dark:text-white">Generated Project Ideas</h4>
-              {projectIdeas.map((idea, index) => (
-                <div
-                  key={index}
-                  className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <h5 className="font-medium text-gray-900 dark:text-white">{idea.title}</h5>
-                    <div className="flex items-center gap-2">
-                      <Badge className={getDifficultyColor(idea.difficulty)}>{idea.difficulty}</Badge>
-                      <Button size="sm" onClick={() => addProjectIdeaAsTasks(idea)}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add as Task
-                      </Button>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{idea.description}</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <span className="font-medium">Timeframe:</span> {idea.estimatedTimeframe}
-                    </div>
-                    <div>
-                      <span className="font-medium">Revenue:</span> {idea.potentialRevenue}
-                    </div>
-                    <div>
-                      <span className="font-medium">Skills:</span> {idea.requiredSkills?.join(", ")}
-                    </div>
+          <AnimatePresence>
+            {projectIdeas.length > 0 && !isProjectIdeasCollapsed && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ 
+                  duration: 0.4, 
+                  ease: "easeInOut",
+                  opacity: { duration: 0.3 }
+                }}
+                className="overflow-hidden"
+              >
+                <div className="mt-6 space-y-4">
+                  <h4 className="font-medium text-gray-900 dark:text-white">Generated Project Ideas</h4>
+                  <div className="space-y-4">
+                    <AnimatePresence mode="popLayout">
+                      {projectIdeas.map((idea, index) => (
+                        <motion.div
+                          key={idea.title + index}
+                          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ 
+                            opacity: 0, 
+                            x: -100, 
+                            scale: 0.8,
+                            transition: { duration: 0.3, ease: "easeInOut" }
+                          }}
+                          transition={{ 
+                            delay: index * 0.15, 
+                            duration: 0.4,
+                            ease: "easeOut"
+                          }}
+                          layout
+                          className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <h5 className="font-medium text-gray-900 dark:text-white">{idea.title}</h5>
+                            <div className="flex items-center gap-2">
+                              <Badge className={getDifficultyColor(idea.difficulty)}>{idea.difficulty}</Badge>
+                              <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
+                                <Button size="sm" onClick={() => addProjectIdeaAsTasks(idea)}>
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  Add as Task
+                                </Button>
+                              </motion.div>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{idea.description}</p>
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.15 + 0.2, duration: 0.3 }}
+                            className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs"
+                          >
+                            <div>
+                              <span className="font-medium">Timeframe:</span> {idea.estimatedTimeframe}
+                            </div>
+                            <div>
+                              <span className="font-medium">Revenue:</span> {idea.potentialRevenue}
+                            </div>
+                            <div>
+                              <span className="font-medium">Skills:</span> {idea.requiredSkills?.join(", ")}
+                            </div>
+                          </motion.div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </CardContent>
       </Card>
 
@@ -539,7 +740,6 @@ export function AITaskboard() {
           <CardTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-purple-600" />
             AI Task Generator
-            <Badge className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">Groq SDK</Badge>
           </CardTitle>
           <CardDescription className="text-gray-600 dark:text-gray-300">
             Describe your project and let AI generate a detailed task list using Groq's lightning-fast LLM
@@ -636,14 +836,266 @@ export function AITaskboard() {
         </CardContent>
       </Card>
 
+      {/* Manual Task Creation */}
+      <Card className="bg-white dark:bg-gray-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5 text-green-600" />
+            Manual Task Creation
+          </CardTitle>
+          <CardDescription className="text-gray-600 dark:text-gray-300">
+            Create tasks manually for specific clients and projects
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AnimatePresence mode="wait">
+            {!showManualTaskForm ? (
+              <motion.div 
+                key="button"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="text-center py-8"
+              >
+                <Button
+                  onClick={() => setShowManualTaskForm(true)}
+                  className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create New Task
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.form 
+                key="form"
+                initial={{ opacity: 0, y: 20, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -20, height: 0 }}
+                transition={{ 
+                  duration: 0.4, 
+                  ease: "easeInOut",
+                  opacity: { duration: 0.3 }
+                }}
+                action={handleManualTaskCreation} 
+                className="space-y-4 overflow-hidden"
+              >
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
+                  <div>
+                    <Label htmlFor="title" className="text-gray-700 dark:text-gray-300">
+                      Task Title *
+                    </Label>
+                    <Input
+                      id="title"
+                      name="title"
+                      placeholder="e.g., Design homepage mockup"
+                      className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="priority" className="text-gray-700 dark:text-gray-300">
+                      Priority *
+                    </Label>
+                    <Select name="priority" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.3 }}
+                >
+                  <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">
+                    Task Description *
+                  </Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    placeholder="Describe what needs to be done..."
+                    className="min-h-[80px] bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                    required
+                  />
+                </motion.div>
+
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.3 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
+                  <div>
+                    <Label htmlFor="estimatedHours" className="text-gray-700 dark:text-gray-300">
+                      Estimated Hours *
+                    </Label>
+                    <Input
+                      id="estimatedHours"
+                      name="estimatedHours"
+                      type="number"
+                      min="0.5"
+                      step="0.5"
+                      placeholder="4"
+                      className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="projectName" className="text-gray-700 dark:text-gray-300">
+                      Project Name
+                    </Label>
+                    <Input
+                      id="projectName"
+                      name="projectName"
+                      placeholder="e.g., Website Redesign"
+                      className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                    />
+                  </div>
+                </motion.div>
+
+                {/* Client Selection */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.3 }}
+                >
+                  <Label htmlFor="clientEmail" className="text-gray-700 dark:text-gray-300">
+                    Client
+                  </Label>
+                  <Select 
+                    name="clientEmail" 
+                    value={selectedClientForTask} 
+                    onValueChange={setSelectedClientForTask}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select client or create new" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Client</SelectItem>
+                      {clients.map((client) => (
+                        <SelectItem key={client.email} value={client.email}>
+                          {client.name} {client.company && `(${client.company})`}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="new">+ Create New Client</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </motion.div>
+
+                {/* New Client Fields (shown when "Create New Client" is selected) */}
+                <AnimatePresence>
+                  {selectedClientForTask === "new" && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: "auto" }}
+                      exit={{ opacity: 0, y: -10, height: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden"
+                    >
+                      <div>
+                        <Label htmlFor="newClientName" className="text-gray-700 dark:text-gray-300">
+                          New Client Name *
+                        </Label>
+                        <Input
+                          id="newClientName"
+                          name="newClientName"
+                          placeholder="John Smith"
+                          className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="newClientCompany" className="text-gray-700 dark:text-gray-300">
+                          Company
+                        </Label>
+                        <Input
+                          id="newClientCompany"
+                          name="newClientCompany"
+                          placeholder="Acme Corp"
+                          className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.3 }}
+                  className="flex gap-2"
+                >
+                  <Button
+                    type="submit"
+                    disabled={manualTaskLoading}
+                    className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                  >
+                    {manualTaskLoading ? (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4 animate-spin" />
+                        Creating Task...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Task
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowManualTaskForm(false)
+                      setSelectedClientForTask("")
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </motion.div>
+              </motion.form>
+            )}
+          </AnimatePresence>
+        </CardContent>
+      </Card>
+
       {/* AI Insights */}
-      {filteredTasks.length > 0 && (
+      {tasks.length > 0 && (
         <Card className="bg-white dark:bg-gray-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
-              Project Insights
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                Project Insights
+              </CardTitle>
+              {insights && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleInsightsCollapse}
+                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  {isInsightsCollapsed ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+            </div>
             <CardDescription className="text-gray-600 dark:text-gray-300">
               Get AI-powered analysis of your project progress and recommendations
             </CardDescription>
@@ -663,57 +1115,119 @@ export function AITaskboard() {
               )}
             </Button>
 
-            {insights && (
-              <div className="space-y-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Progress Analysis</h4>
-                  <p className="text-blue-800 dark:text-blue-200">{insights.progressAnalysis}</p>
-                </div>
+            <AnimatePresence>
+              {insights && !isInsightsCollapsed && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ 
+                    duration: 0.4, 
+                    ease: "easeInOut",
+                    opacity: { duration: 0.3 }
+                  }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-4">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1, duration: 0.3 }}
+                      className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
+                    >
+                      <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Progress Analysis</h4>
+                      <p className="text-blue-800 dark:text-blue-200">{insights.progressAnalysis}</p>
+                    </motion.div>
 
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <h4 className="font-medium text-green-900 dark:text-green-300 mb-2">Recommendations</h4>
-                  <ul className="space-y-1">
-                    {insights.recommendations?.map((rec: string, index: number) => (
-                      <li key={index} className="text-green-800 dark:text-green-200 flex items-start gap-2">
-                        <span className="text-green-600 mt-1">•</span>
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.3 }}
+                      className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg"
+                    >
+                      <h4 className="font-medium text-green-900 dark:text-green-300 mb-2">Recommendations</h4>
+                      <ul className="space-y-1">
+                        {insights.recommendations?.map((rec: string, index: number) => (
+                          <motion.li 
+                            key={index} 
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.3 + index * 0.05, duration: 0.2 }}
+                            className="text-green-800 dark:text-green-200 flex items-start gap-2"
+                          >
+                            <span className="text-green-600 mt-1">•</span>
+                            {rec}
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    <h4 className="font-medium text-purple-900 dark:text-purple-300 mb-2">Estimated Completion</h4>
-                    <p className="text-purple-800 dark:text-purple-200">{insights.estimatedCompletion}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3, duration: 0.3 }}
+                        className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg"
+                      >
+                        <h4 className="font-medium text-purple-900 dark:text-purple-300 mb-2">Estimated Completion</h4>
+                        <p className="text-purple-800 dark:text-purple-200">{insights.estimatedCompletion}</p>
+                      </motion.div>
+
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4, duration: 0.3 }}
+                        className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg"
+                      >
+                        <h4 className="font-medium text-orange-900 dark:text-orange-300 mb-2">Risk Factors</h4>
+                        <ul className="space-y-1">
+                          {insights.riskFactors?.map((risk: string, index: number) => (
+                            <motion.li 
+                              key={index} 
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.5 + index * 0.05, duration: 0.2 }}
+                              className="text-orange-800 dark:text-orange-200 flex items-start gap-2"
+                            >
+                              <span className="text-orange-600 mt-1">⚠</span>
+                              {risk}
+                            </motion.li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    </div>
                   </div>
-
-                  <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                    <h4 className="font-medium text-orange-900 dark:text-orange-300 mb-2">Risk Factors</h4>
-                    <ul className="space-y-1">
-                      {insights.riskFactors?.map((risk: string, index: number) => (
-                        <li key={index} className="text-orange-800 dark:text-orange-200 flex items-start gap-2">
-                          <span className="text-orange-600 mt-1">⚠</span>
-                          {risk}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </CardContent>
         </Card>
       )}
 
       {/* Task Suggestions */}
-      {filteredTasks.length > 0 && (
+      {tasks.length > 0 && (
         <Card className="bg-white dark:bg-gray-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-yellow-600" />
-              Smart Suggestions
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-yellow-600" />
+                Smart Suggestions
+              </CardTitle>
+              {suggestions.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleSuggestionsCollapse}
+                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  {isSuggestionsCollapsed ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+            </div>
             <CardDescription className="text-gray-600 dark:text-gray-300">
               Get AI-powered suggestions for additional tasks based on your current project
             </CardDescription>
@@ -738,57 +1252,87 @@ export function AITaskboard() {
               )}
             </Button>
 
-            {suggestions.length > 0 && (
-              <div className="space-y-3">
-                {suggestions.map((suggestion, index) => (
-                  <div
-                    key={index}
-                    className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 dark:text-white">{suggestion.title}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{suggestion.description}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge className={getPriorityColor(suggestion.priority)}>{suggestion.priority}</Badge>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {suggestion.estimatedHours}h estimated
-                          </span>
+            <AnimatePresence>
+              {suggestions.length > 0 && !isSuggestionsCollapsed && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ 
+                    duration: 0.4, 
+                    ease: "easeInOut",
+                    opacity: { duration: 0.3 }
+                  }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-3">
+                    {suggestions.map((suggestion, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ 
+                          delay: index * 0.1, 
+                          duration: 0.3,
+                          ease: "easeOut"
+                        }}
+                        className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900 dark:text-white">{suggestion.title}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{suggestion.description}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge className={getPriorityColor(suggestion.priority)}>{suggestion.priority}</Badge>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {suggestion.estimatedHours}h estimated
+                              </span>
+                            </div>
+                          </div>
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Button size="sm" onClick={() => addSuggestionAsTask(suggestion)} className="ml-3">
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add
+                            </Button>
+                          </motion.div>
                         </div>
-                      </div>
-                      <Button size="sm" onClick={() => addSuggestionAsTask(suggestion)} className="ml-3">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add
-                      </Button>
-                    </div>
+                      </motion.div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </CardContent>
         </Card>
       )}
       {/* Client and Project Filters */}
-      {(clients.length > 0 || projects.length > 0) && (
+      {tasks.length > 0 && (
         <Card className="bg-white dark:bg-gray-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5 text-blue-600" />
               Filter Tasks
-              {(selectedClient !== "all" || selectedProject !== "all") && (
+              {(selectedClient !== "all" || selectedProject !== "all" || selectedStatus !== "all" || selectedPriority !== "all") && (
                 <Badge variant="secondary">
-                  {selectedClient !== "all" && selectedProject !== "all"
-                    ? "Client & Project"
+                  {[selectedClient !== "all", selectedProject !== "all", selectedStatus !== "all", selectedPriority !== "all"].filter(Boolean).length > 1
+                    ? "Multiple Filters"
                     : selectedClient !== "all"
                       ? "Client"
-                      : "Project"}{" "}
+                      : selectedProject !== "all"
+                        ? "Project"
+                        : selectedStatus !== "all"
+                          ? "Status"
+                          : "Priority"}{" "}
                   Filter Active
                 </Badge>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <Label htmlFor="clientFilter" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
@@ -829,8 +1373,44 @@ export function AITaskboard() {
                 </Select>
               </div>
 
+              <div>
+                <Label htmlFor="statusFilter" className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Filter by Status
+                </Label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="priorityFilter" className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Filter by Priority
+                </Label>
+                <Select value={selectedPriority} onValueChange={setSelectedPriority}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All priorities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priorities</SelectItem>
+                    <SelectItem value="high">High Priority</SelectItem>
+                    <SelectItem value="medium">Medium Priority</SelectItem>
+                    <SelectItem value="low">Low Priority</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex items-end">
-                {(selectedClient !== "all" || selectedProject !== "all") && (
+                {(selectedClient !== "all" || selectedProject !== "all" || selectedStatus !== "all" || selectedPriority !== "all") && (
                   <Button variant="outline" onClick={clearFilters} className="w-full">
                     <X className="h-4 w-4 mr-2" />
                     Clear Filters
@@ -842,124 +1422,406 @@ export function AITaskboard() {
         </Card>
       )}
 
-      {/* Tasks List */}
-      {filteredTasks.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {selectedClient !== "all" || selectedProject !== "all" ? "Filtered Tasks" : "Your Tasks"}
-            </h3>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700">
-                {completedTasks}/{filteredTasks.length} completed
-              </Badge>
-              <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                {completedHours}/{totalHours}h done
-              </Badge>
-            </div>
-          </div>
-          <div className="grid gap-4">
-            {filteredTasks.map((task) => (
-              <Card key={task.id} className="hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-lg text-gray-900 dark:text-white">{task.title}</h4>
-                      {(task.client_name || task.project_name) && (
-                        <div className="flex items-center gap-2 mt-1">
-                          {task.client_name && (
-                            <Badge variant="outline" className="text-xs">
-                              <Users className="h-3 w-3 mr-1" />
-                              {task.client_name}
-                              {task.client_company && ` (${task.client_company})`}
-                            </Badge>
-                          )}
-                          {task.project_name && (
-                            <Badge variant="outline" className="text-xs">
-                              <Building className="h-3 w-3 mr-1" />
-                              {task.project_name}
-                            </Badge>
-                          )}
+      {/* Dynamic Status Bar */}
+      {tasks.length > 0 && (
+        <Card className="bg-white dark:bg-gray-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              Task Status Distribution
+              {(selectedClient !== "all" || selectedProject !== "all" || selectedStatus !== "all" || selectedPriority !== "all") && (
+                <Badge variant="secondary" className="text-xs">
+                  Filtered View
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription className="text-gray-600 dark:text-gray-300">
+              Visual representation of task status distribution
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Status Bar */}
+              <div className="relative">
+                <div className="flex h-8 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                  {(() => {
+                    const distribution = getStatusDistribution()
+                    return (
+                      <>
+                        {/* Pending - Red */}
+                        {distribution.pending > 0 && (
+                          <div 
+                            className="bg-red-500 flex items-center justify-center text-white text-xs font-medium transition-all duration-300"
+                            style={{ width: `${distribution.percentages.pending}%` }}
+                            title={`${distribution.pending} pending tasks (${distribution.percentages.pending}%)`}
+                          >
+                            {distribution.percentages.pending > 10 && `${distribution.percentages.pending}%`}
+                          </div>
+                        )}
+                        
+                        {/* In Progress - Yellow */}
+                        {distribution.inProgress > 0 && (
+                          <div 
+                            className="bg-yellow-500 flex items-center justify-center text-white text-xs font-medium transition-all duration-300"
+                            style={{ width: `${distribution.percentages.inProgress}%` }}
+                            title={`${distribution.inProgress} in progress tasks (${distribution.percentages.inProgress}%)`}
+                          >
+                            {distribution.percentages.inProgress > 10 && `${distribution.percentages.inProgress}%`}
+                          </div>
+                        )}
+                        
+                        {/* Completed - Green */}
+                        {distribution.completed > 0 && (
+                          <div 
+                            className="bg-green-500 flex items-center justify-center text-white text-xs font-medium transition-all duration-300"
+                            style={{ width: `${distribution.percentages.completed}%` }}
+                            title={`${distribution.completed} completed tasks (${distribution.percentages.completed}%)`}
+                          >
+                            {distribution.percentages.completed > 10 && `${distribution.percentages.completed}%`}
+                          </div>
+                        )}
+                        
+                        {/* Empty state */}
+                        {distribution.pending === 0 && distribution.inProgress === 0 && distribution.completed === 0 && (
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 text-xs">
+                            No tasks match current filters
+                          </div>
+                        )}
+                      </>
+                    )
+                  })()}
+                </div>
+              </div>
+
+              {/* Status Legend */}
+              <div className="flex flex-wrap gap-4 text-sm">
+                {(() => {
+                  const distribution = getStatusDistribution()
+                  return (
+                    <>
+                      {distribution.pending > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-red-500 rounded"></div>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            Pending: {distribution.pending} ({distribution.percentages.pending}%)
+                          </span>
                         </div>
                       )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
-                      {getStatusIcon(task.status)}
-                    </div>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-300 mb-3">{task.description}</p>
-
-                  {/* Task Breakdown */}
-                  <div className="mb-3">
-                    <Button variant="outline" size="sm" onClick={() => handleTaskBreakdown(task)} className="text-xs">
-                      {expandedTask === task.id ? (
-                        <ChevronDown className="h-3 w-3 mr-1" />
-                      ) : (
-                        <ChevronRight className="h-3 w-3 mr-1" />
+                      
+                      {distribution.inProgress > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            In Progress: {distribution.inProgress} ({distribution.percentages.inProgress}%)
+                          </span>
+                        </div>
                       )}
-                      {taskBreakdowns[task.id] ? "Subtasks" : "Break Down Task"}
-                    </Button>
+                      
+                      {distribution.completed > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-500 rounded"></div>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            Completed: {distribution.completed} ({distribution.percentages.completed}%)
+                          </span>
+                        </div>
+                      )}
+                      
+                      {distribution.pending === 0 && distribution.inProgress === 0 && distribution.completed === 0 && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-gray-400 rounded"></div>
+                          <span className="text-gray-500 dark:text-gray-400">
+                            No tasks available
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-                    {expandedTask === task.id && taskBreakdowns[task.id] && (
-                      <div className="mt-2 pl-4 border-l-2 border-gray-200 dark:border-gray-600">
-                        {taskBreakdowns[task.id].map((subtask: any, index: number) => (
-                          <div key={index} className="py-1 text-sm text-gray-600 dark:text-gray-300">
-                            <span className="font-medium">•</span> {subtask.subtask}
-                            <span className="text-xs text-gray-500 ml-2">({subtask.estimatedMinutes}min)</span>
+      {/* Tasks List */}
+      {tasks.length > 0 && (
+        <Card className="bg-white dark:bg-gray-800">
+          <CardContent className="p-0">
+            {/* Collapsible Tasks List Header */}
+            <div 
+              className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700"
+              onClick={toggleTasksListCollapse}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {isTasksListCollapsed ? (
+                    <ChevronRight className="h-5 w-5 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-gray-500" />
+                  )}
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {selectedClient !== "all" || selectedProject !== "all" || selectedStatus !== "all" || selectedPriority !== "all" ? "Filtered Tasks" : "Your Tasks"}
+                  </h3>
+                  <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700">
+                    {filteredTasks.length} tasks
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700">
+                    {completedTasks}/{filteredTasks.length} completed
+                  </Badge>
+                  <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                    {completedHours}/{totalHours}h done
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Collapsible Tasks Content */}
+            <AnimatePresence>
+              {!isTasksListCollapsed && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ 
+                    duration: 0.4, 
+                    ease: "easeInOut",
+                    opacity: { duration: 0.3 }
+                  }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-4 space-y-4">
+                    {filteredTasks.length > 0 ? (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={collapseAllTasks}
+                              className="text-xs"
+                            >
+                              <ChevronRight className="h-3 w-3 mr-1" />
+                              Collapse All
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={expandAllTasks}
+                              className="text-xs"
+                            >
+                              <ChevronDown className="h-3 w-3 mr-1" />
+                              Expand All
+                            </Button>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                        
+                        <div className="grid gap-4">
+                          <AnimatePresence mode="popLayout">
+                            {filteredTasks.map((task, index) => (
+                              <motion.div
+                                key={task.id}
+                                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ 
+                                  opacity: 0, 
+                                  x: -100, 
+                                  scale: 0.8,
+                                  transition: { duration: 0.3, ease: "easeInOut" }
+                                }}
+                                transition={{ 
+                                  duration: 0.4, 
+                                  delay: index * 0.1,
+                                  ease: "easeOut"
+                                }}
+                                layout
+                                className="w-full"
+                              >
+                                <Card className="hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
+                                  <CardContent className="p-0">
+                                    {/* Collapsible Header */}
+                                    <div 
+                                      className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                      onClick={() => toggleTaskCollapse(task.id)}
+                                    >
+                                      <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2">
+                                            {collapsedTasks.has(task.id) ? (
+                                              <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                                            ) : (
+                                              <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                                            )}
+                                            <h4 className="font-medium text-lg text-gray-900 dark:text-white">{task.title}</h4>
+                                          </div>
+                                          {(task.client_name || task.project_name) && (
+                                            <div className="flex items-center gap-2 mt-1 ml-6">
+                                              {task.client_name && (
+                                                <Badge variant="outline" className="text-xs">
+                                                  <Users className="h-3 w-3 mr-1" />
+                                                  {task.client_name}
+                                                  {task.client_company && ` (${task.client_company})`}
+                                                </Badge>
+                                              )}
+                                              {task.project_name && (
+                                                <Badge variant="outline" className="text-xs">
+                                                  <Building className="h-3 w-3 mr-1" />
+                                                  {task.project_name}
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
+                                          {getStatusIcon(task.status)}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Collapsible Content */}
+                                    <AnimatePresence>
+                                      {!collapsedTasks.has(task.id) && (
+                                        <motion.div 
+                                          initial={{ opacity: 0, height: 0 }}
+                                          animate={{ opacity: 1, height: "auto" }}
+                                          exit={{ opacity: 0, height: 0 }}
+                                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                                          className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 overflow-hidden"
+                                        >
+                                          <p className="text-gray-600 dark:text-gray-300 mb-3 mt-3">{task.description}</p>
+
+                                          {/* Task Breakdown */}
+                                          <div className="mb-3">
+                                            <Button variant="outline" size="sm" onClick={() => handleTaskBreakdown(task)} className="text-xs">
+                                              {expandedTask === task.id ? (
+                                                <ChevronDown className="h-3 w-3 mr-1" />
+                                              ) : (
+                                                <ChevronRight className="h-3 w-3 mr-1" />
+                                              )}
+                                              {taskBreakdowns[task.id] ? "Subtasks" : "Break Down Task"}
+                                            </Button>
+
+                                            <AnimatePresence>
+                                              {expandedTask === task.id && taskBreakdowns[task.id] && (
+                                                <motion.div 
+                                                  initial={{ opacity: 0, x: -20 }}
+                                                  animate={{ opacity: 1, x: 0 }}
+                                                  exit={{ opacity: 0, x: -20 }}
+                                                  transition={{ duration: 0.2 }}
+                                                  className="mt-2 pl-4 border-l-2 border-gray-200 dark:border-gray-600"
+                                                >
+                                                  {taskBreakdowns[task.id].map((subtask: any, index: number) => (
+                                                    <motion.div 
+                                                      key={index} 
+                                                      initial={{ opacity: 0, x: -10 }}
+                                                      animate={{ opacity: 1, x: 0 }}
+                                                      transition={{ delay: index * 0.05 }}
+                                                      className="py-1 text-sm text-gray-600 dark:text-gray-300"
+                                                    >
+                                                      <span className="font-medium">•</span> {subtask.subtask}
+                                                      <span className="text-xs text-gray-500 ml-2">({subtask.estimatedMinutes}min)</span>
+                                                    </motion.div>
+                                                  ))}
+                                                </motion.div>
+                                              )}
+                                            </AnimatePresence>
+                                          </div>
+
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                                              <Clock className="h-4 w-4" />
+                                              {task.estimated_hours}h estimated
+                                            </div>
+                                            <div className="flex gap-2">
+                                              {task.status === "pending" && (
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleUpdateTaskStatus(task.id, "in_progress")}
+                                                >
+                                                  <Play className="h-4 w-4 mr-1" />
+                                                  Start
+                                                </Button>
+                                              )}
+                                              {task.status === "in_progress" && (
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleUpdateTaskStatus(task.id, "completed")}
+                                                >
+                                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                                  Complete
+                                                </Button>
+                                              )}
+                                              {task.status === "completed" && (
+                                                <Button variant="outline" size="sm" onClick={() => handleUpdateTaskStatus(task.id, "pending")}>
+                                                  <Pause className="h-4 w-4 mr-1" />
+                                                  Reopen
+                                                </Button>
+                                              )}
+                                              <motion.div
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                              >
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleDeleteTask(task.id)}
+                                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900"
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                              </motion.div>
+                                            </div>
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </CardContent>
+                                </Card>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+                        </div>
+                      </>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="text-center py-12"
+                      >
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                            <Filter className="h-8 w-8 text-gray-400" />
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                              No tasks match your filters
+                            </h4>
+                            <p className="text-gray-500 dark:text-gray-400 mb-4">
+                              Try adjusting your filters or create new tasks to get started.
+                            </p>
+                            <Button
+                              variant="outline"
+                              onClick={clearFilters}
+                              className="flex items-center gap-2"
+                            >
+                              <X className="h-4 w-4" />
+                              Clear All Filters
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
                     )}
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                      <Clock className="h-4 w-4" />
-                      {task.estimated_hours}h estimated
-                    </div>
-                    <div className="flex gap-2">
-                      {task.status === "pending" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUpdateTaskStatus(task.id, "in_progress")}
-                        >
-                          <Play className="h-4 w-4 mr-1" />
-                          Start
-                        </Button>
-                      )}
-                      {task.status === "in_progress" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUpdateTaskStatus(task.id, "completed")}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Complete
-                        </Button>
-                      )}
-                      {task.status === "completed" && (
-                        <Button variant="outline" size="sm" onClick={() => handleUpdateTaskStatus(task.id, "pending")}>
-                          <Pause className="h-4 w-4 mr-1" />
-                          Reopen
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteTask(task.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

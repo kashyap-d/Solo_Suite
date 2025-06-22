@@ -1,21 +1,84 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { AITaskboard } from "./ai-taskboard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare } from "lucide-react"
+import { Briefcase, DollarSign, Users, Calendar, MessageSquare } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { supabase } from "@/lib/supabaseClient"
 
 export function ProviderDashboard() {
+  const [stats, setStats] = useState({
+    activeProjects: 0,
+    totalClients: 0,
+    monthlyRevenue: 0
+  })
+  const [loading, setLoading] = useState(true)
+
+  const { user } = useAuth()
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardStats()
+    }
+  }, [user])
+
+  const fetchDashboardStats = async () => {
+    if (!user) return
+
+    try {
+      setLoading(true)
+      
+      // Fetch all tasks for the user
+      const { data: tasks, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("user_id", user.id)
+
+      if (error) throw error
+
+      // Calculate unique projects
+      const uniqueProjects = new Set(
+        (tasks || []).filter(task => task.project_name).map(task => task.project_name)
+      )
+
+      // Calculate unique clients
+      const uniqueClients = new Set(
+        (tasks || []).filter(task => task.client_email).map(task => task.client_email)
+      )
+
+      // Calculate monthly revenue (estimated based on completed tasks)
+      const completedTasks = (tasks || []).filter(task => task.status === "completed")
+      const monthlyRevenue = completedTasks.reduce((sum, task) => {
+        // Assuming $50/hour average rate - you can adjust this
+        return sum + (task.estimated_hours * 50)
+      }, 0)
+
+      setStats({
+        activeProjects: uniqueProjects.size,
+        totalClients: uniqueClients.size,
+        monthlyRevenue: monthlyRevenue
+      })
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Active Projects</p>
-                <p className="text-2xl font-bold">3</p>
+                <p className="text-2xl font-bold">
+                  {loading ? "..." : stats.activeProjects}
+                </p>
               </div>
               <Briefcase className="h-8 w-8 text-blue-600" />
             </div>
@@ -27,7 +90,9 @@ export function ProviderDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Monthly Revenue</p>
-                <p className="text-2xl font-bold">$2,450</p>
+                <p className="text-2xl font-bold">
+                  {loading ? "..." : `$${stats.monthlyRevenue.toLocaleString()}`}
+                </p>
               </div>
               <DollarSign className="h-8 w-8 text-green-600" />
             </div>
@@ -39,21 +104,11 @@ export function ProviderDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Clients</p>
-                <p className="text-2xl font-bold">12</p>
+                <p className="text-2xl font-bold">
+                  {loading ? "..." : stats.totalClients}
+                </p>
               </div>
               <Users className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Success Rate</p>
-                <p className="text-2xl font-bold">98%</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
