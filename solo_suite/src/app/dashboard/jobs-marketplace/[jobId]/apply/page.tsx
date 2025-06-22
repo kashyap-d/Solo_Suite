@@ -166,7 +166,7 @@ function ApplyJobContent() {
         .insert([
           {
             job_id: job?.id,
-            provider_id: user.id,
+            provider_id: user?.id || "",
             proposal: form.proposal,
             status: "pending",
           },
@@ -178,7 +178,7 @@ function ApplyJobContent() {
       // Send emails
       if (applicationData) {
         // Email to provider
-        if(user.email) {
+        if(user?.email) {
           await sendApplicationConfirmationEmail(
             user.email,
             user.user_metadata.name || "Freelancer",
@@ -202,7 +202,7 @@ function ApplyJobContent() {
             clientData.email,
             clientData.name || "Client",
             job?.title || "",
-            user.user_metadata.name || "a freelancer",
+            user?.user_metadata?.name || "a freelancer",
             `/dashboard/my-jobs/${job?.id}/applications`
           )
         }

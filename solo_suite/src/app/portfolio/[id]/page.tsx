@@ -74,7 +74,7 @@ function PortfolioDetailContent() {
             email
           )
         `)
-        .eq("id", params.id)
+        .eq("provider_id", params.id)
         .eq("is_available", true)
         .single()
       

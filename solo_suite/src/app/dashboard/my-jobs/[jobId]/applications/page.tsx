@@ -18,7 +18,7 @@ import {
 import { AuthGuard } from "@/components/auth-gaurd"
 import Link from "next/link"
 import { toast } from "sonner"
-import { sendApplicationAcceptedEmail } from "@/actions/email-actions.tsx"
+import { sendApplicationAcceptedEmail } from "@/actions/email-actions"
 
 interface ApplicationWithProvider extends JobApplication {
   profiles: UserProfile | null
@@ -105,7 +105,7 @@ function ViewApplicationsContent() {
           provider:profiles (id, email, name),
           job:jobs (id, title, client:profiles (id, name))
         `)
-        .single();
+        .single<any>();
 
       if (error) throw error;
 
@@ -190,58 +190,61 @@ function ViewApplicationsContent() {
             </div>
           ) : (
             applications.map((app) => (
-              <Card key={app.id} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white dark:bg-gray-800">
+              <Card
+                key={app.id}
+                className="group hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800"
+              >
                 <CardContent className="p-6">
-                  <div className="flex flex-col sm:flex-row justify-between gap-4">
-                    <div className="flex-1">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
+                    {/* Left: Applicant Info */}
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-bold text-xl text-gray-900 dark:text-white">
+                        <h3 className="font-bold text-xl text-gray-900 dark:text-white truncate">
                           {app.profiles?.name || 'Anonymous Provider'}
                         </h3>
                         <Badge variant={getStatusBadgeVariant(app.status)} className="capitalize">
                           {app.status}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-500 mt-2 line-clamp-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-line break-words line-clamp-3">
                         {app.proposal}
                       </p>
                     </div>
 
-                    <div className="flex flex-col sm:items-end sm:text-right gap-2">
-                      <div className="text-lg font-semibold text-green-600">
-                        ${app.proposed_rate}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {app.estimated_duration}
-                      </div>
-                    </div>
+                    {/* Right: Offer + Buttons */}
+                    <div className="flex flex-col gap-2 sm:items-end sm:text-right w-full sm:w-auto">
+                      <div className="text-lg font-semibold text-green-600">${app.proposed_rate}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{app.estimated_duration}</div>
 
-                    <div className="flex flex-col md:flex-row gap-2 items-stretch mt-4 md:mt-0 md:items-center">
-                      <Link href={`/portfolio/${app.provider_id}`} target="_blank" className="flex-shrink-0">
-                        <Button variant="outline" className="w-full">
-                          <Eye className="h-4 w-4 mr-2"/>
-                          View Portfolio
-                        </Button>
-                      </Link>
-                      {app.status === 'pending' && (
-                        <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2 w-full">
-                          <Button 
-                            variant="destructive" 
-                            className="w-full" 
-                            onClick={() => handleUpdateStatus(app.id, 'rejected')}
-                          >
-                            <X className="h-4 w-4 mr-2"/>
-                            Reject
+                      {/* Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-2 flex-wrap w-full sm:w-auto">
+                        <Link href={`/portfolio/${app.provider_id}`} target="_blank" className="w-full sm:w-auto">
+                          <Button variant="outline" className="w-full sm:w-auto">
+                            <Eye className="h-4 w-4 mr-2" />
+                            Portfolio
                           </Button>
-                          <Button 
-                            className="w-full" 
-                            onClick={() => handleUpdateStatus(app.id, 'accepted')}
-                          >
-                            <Check className="h-4 w-4 mr-2"/>
-                            Accept
-                          </Button>
-                        </div>
-                      )}
+                        </Link>
+
+                        {app.status === 'pending' && (
+                          <>
+                            <Button
+                              variant="destructive"
+                              className="w-full sm:w-auto"
+                              onClick={() => handleUpdateStatus(app.id, 'rejected')}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Reject
+                            </Button>
+                            <Button
+                              className="w-full sm:w-auto"
+                              onClick={() => handleUpdateStatus(app.id, 'accepted')}
+                            >
+                              <Check className="h-4 w-4 mr-2" />
+                              Accept
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

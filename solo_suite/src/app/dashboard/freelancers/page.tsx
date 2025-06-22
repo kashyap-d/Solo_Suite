@@ -52,8 +52,10 @@ const getGradientColors = (name: string) => {
 
 function FreelancersContent() {
   const [portfolios, setPortfolios] = useState<PortfolioWithProvider[]>([])
+  const [filteredPortfolios, setFilteredPortfolios] = useState<PortfolioWithProvider[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [search, setSearch] = useState("")
   const { userProfile } = useAuth()
   const router = useRouter()
 
@@ -85,6 +87,7 @@ function FreelancersContent() {
       if (error) {
         setError("Failed to load portfolios.")
         setPortfolios([])
+        setFilteredPortfolios([])
       } else {
         const transformed = (data || []).map((portfolio: any) => ({
           ...portfolio,
@@ -92,6 +95,7 @@ function FreelancersContent() {
           provider_email: portfolio.profiles?.email || ""
         }))
         setPortfolios(transformed)
+        setFilteredPortfolios(transformed)
       }
 
       setLoading(false)
@@ -99,6 +103,23 @@ function FreelancersContent() {
 
     fetchPortfolios()
   }, [])
+
+  // Search/filter logic
+  useEffect(() => {
+    if (!search.trim()) {
+      setFilteredPortfolios(portfolios)
+      return
+    }
+    const q = search.toLowerCase()
+    setFilteredPortfolios(
+      portfolios.filter((p) =>
+        p.provider_name.toLowerCase().includes(q) ||
+        p.title?.toLowerCase().includes(q) ||
+        p.bio?.toLowerCase().includes(q) ||
+        (Array.isArray(p.skills) && p.skills.some((s: string) => s.toLowerCase().includes(q)))
+      )
+    )
+  }, [search, portfolios])
 
   if (userProfile?.role === "provider") {
     return null;
@@ -131,22 +152,29 @@ function FreelancersContent() {
       {/* Search and Filters */}
       <Card className="border-0 shadow-lg bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
         <CardContent className="p-6">
-          <div className="flex gap-4">
+          <form className="flex gap-4" onSubmit={e => { e.preventDefault(); }}>
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
                 type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
                 placeholder="Search for services, skills, or providers..."
                 className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-800 shadow-sm transition-all duration-200"
               />
+              {search && (
+                <button type="button" onClick={() => setSearch("")} className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                  ×
+                </button>
+              )}
             </div>
-            <Button variant="outline" className="px-6 py-3 rounded-xl border-gray-200 dark:border-gray-700 transition-all duration-300 hover:scale-105">
+            <Button variant="outline" className="px-6 py-3 rounded-xl border-gray-200 dark:border-gray-700 transition-all duration-300 hover:scale-105" type="button" disabled>
               Filters
             </Button>
-            <Button className="bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 px-6 py-3 rounded-xl shadow-lg transition-all duration-300">
+            <Button className="bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 px-6 py-3 rounded-xl shadow-lg transition-all duration-300" type="submit">
               Search
             </Button>
-          </div>
+          </form>
         </CardContent>
       </Card>
 
@@ -166,7 +194,7 @@ function FreelancersContent() {
           </div>
         )}
 
-        {!loading && !error && portfolios.length === 0 && (
+        {!loading && !error && filteredPortfolios.length === 0 && (
           <div className="text-center py-12">
             <div className="text-muted-foreground text-6xl mb-4">🔍</div>
             <p className="text-muted-foreground text-lg">No portfolios found.</p>
@@ -176,7 +204,7 @@ function FreelancersContent() {
 
         {!loading &&
           !error &&
-          portfolios.map((portfolio) => (
+          filteredPortfolios.map((portfolio) => (
             <Card
               key={portfolio.id}
               className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden bg-white dark:bg-gray-800 hover:scale-[1.02]"
