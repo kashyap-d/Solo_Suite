@@ -168,6 +168,8 @@ function ApplyJobContent() {
             job_id: job?.id,
             provider_id: user?.id || "",
             proposal: form.proposal,
+            proposed_rate: form.proposed_rate,
+            estimated_duration: form.estimated_duration,
             status: "pending",
           },
         ])
