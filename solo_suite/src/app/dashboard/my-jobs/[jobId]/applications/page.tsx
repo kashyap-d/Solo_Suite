@@ -202,7 +202,16 @@ function ViewApplicationsContent() {
                         <h3 className="font-bold text-xl text-gray-900 dark:text-white truncate">
                           {app.profiles?.name || 'Anonymous Provider'}
                         </h3>
-                        <Badge variant={getStatusBadgeVariant(app.status)} className="capitalize">
+                        <Badge 
+                          variant={getStatusBadgeVariant(app.status)} 
+                          className={
+                            app.status === 'accepted'
+                              ? 'capitalize bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-0'
+                              : app.status === 'rejected'
+                              ? 'capitalize bg-red-100 text-white-800 dark:bg-red-900 dark:text-red-200 border-0'
+                              : 'capitalize'
+                          }
+                        >
                           {app.status}
                         </Badge>
                       </div>
