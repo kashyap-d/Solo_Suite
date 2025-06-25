@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { supabase, type Task } from "@/lib/supabaseClient"
 import { InvoiceGenerator } from "./invoice-generator"
 import { Button } from "@/components/ui/button"
+import ProfileCompletenessMeter from "@/components/profile-completeness-meter"
 
 export function ProviderDashboard() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -20,6 +21,8 @@ export function ProviderDashboard() {
     monthlyRevenue: 0
   })
   const [loading, setLoading] = useState(true)
+  const [portfolio, setPortfolio] = useState<any>(null)
+  const [portfolioLoading, setPortfolioLoading] = useState(true)
 
   const { user } = useAuth()
 
@@ -27,6 +30,7 @@ export function ProviderDashboard() {
     if (user) {
       fetchTasks()
       fetchDashboardStats()
+      fetchPortfolio()
     }
   }, [user])
 
@@ -90,8 +94,50 @@ export function ProviderDashboard() {
     }
   }
 
+  const fetchPortfolio = async () => {
+    if (!user) return
+    setPortfolioLoading(true)
+    try {
+      const { data } = await supabase.from("portfolios").select("*").eq("provider_id", user.id).single()
+      setPortfolio(data)
+    } catch (error) {
+      setPortfolio(null)
+    } finally {
+      setPortfolioLoading(false)
+    }
+  }
+
+  // Calculate profile completeness
+  const calculateCompleteness = () => {
+    if (!portfolio) return 0
+    const fields = [
+      portfolio.title,
+      portfolio.bio,
+      (portfolio.skills || []).join(", "),
+      portfolio.location,
+      portfolio.hourly_rate,
+      portfolio.availability,
+      portfolio.experience_years,
+      portfolio.education,
+      (portfolio.certifications || []).join(", "),
+      (portfolio.portfolio_links || []).join(", "),
+      portfolio.profile_image_url,
+    ]
+    const total = fields.length
+    const filled = fields.filter((f) => {
+      if (Array.isArray(f)) return f.length > 0
+      if (typeof f === "number") return f !== undefined && f !== null
+      return f && String(f).trim().length > 0
+    }).length
+    return Math.round((filled / total) * 100)
+  }
+
   return (
     <div className="space-y-6">
+      {/* Profile Completeness Meter */}
+      {(!portfolioLoading && calculateCompleteness() < 100) && (
+        <ProfileCompletenessMeter completeness={calculateCompleteness()} />
+      )}
       {/* portfolio button */}
       <div className="flex justify-end gap-4">
         <Link href="/dashboard/jobs-marketplace">

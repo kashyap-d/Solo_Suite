@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AuthGuard } from "@/components/auth-gaurd"
 import { User, MapPin, DollarSign, Clock, GraduationCap, Award, LinkIcon, CheckCircle } from "lucide-react"
+import ProfileCompletenessMeter from "@/components/profile-completeness-meter"
 
 function PortfolioContent() {
   const { user, userProfile } = useAuth()
@@ -144,6 +145,30 @@ function PortfolioContent() {
     setLoading(false)
   }
 
+  // Calculate profile completeness
+  const calculateCompleteness = () => {
+    const fields = [
+      form.title,
+      form.bio,
+      skillsInput,
+      form.location,
+      form.hourly_rate,
+      form.availability,
+      form.experience_years,
+      form.education,
+      certificationsInput,
+      portfolioLinksInput,
+      form.profile_image_url,
+    ]
+    const total = fields.length
+    const filled = fields.filter((f) => {
+      if (Array.isArray(f)) return f.length > 0
+      if (typeof f === "number") return f !== undefined && f !== null
+      return f && String(f).trim().length > 0
+    }).length
+    return Math.round((filled / total) * 100)
+  }
+
   if (userProfile?.role === "client") {
     return null
   }
@@ -151,6 +176,10 @@ function PortfolioContent() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4">
+        {/* Profile Completeness Meter */}
+        {calculateCompleteness() < 100 && (
+          <ProfileCompletenessMeter completeness={calculateCompleteness()} />
+        )}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             {editing ? "Edit Your Portfolio" : "Create Your Portfolio"}
