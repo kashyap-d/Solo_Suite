@@ -24,6 +24,8 @@ import { AuthGuard } from "@/components/auth-gaurd"
 interface PortfolioWithProvider extends Portfolio {
   provider_name: string
   provider_email: string
+  avg_rating?: number
+  reviews_count: number
 }
 
 // Utility Functions
@@ -67,33 +69,40 @@ function FreelancersContent() {
   }, [userProfile, router])
 
   useEffect(() => {
-    const fetchPortfolios = async () => {
+    const fetchPortfoliosAndReviews = async () => {
       setLoading(true)
       setError("")
 
-      const { data, error } = await supabase
+      // Fetch portfolios (without reviews join)
+      const { data: portfoliosData, error: portfoliosError } = await supabase
         .from("portfolios")
-        .select(`
-          *,
-          profiles!portfolios_provider_id_fkey (
-            name,
-            email
-          )
-        `)
+        .select(`*, profiles!portfolios_provider_id_fkey ( name, email )`)
         .eq("is_available", true)
         .eq("is_verified", true)
         .order("created_at", { ascending: false })
 
-      if (error) {
+      // Fetch all reviews
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("reviews")
+        .select("provider_id, rating")
+
+      if (portfoliosError || reviewsError) {
         setError("Failed to load portfolios.")
         setPortfolios([])
         setFilteredPortfolios([])
       } else {
-        const transformed = (data || []).map((portfolio: any) => ({
-          ...portfolio,
-          provider_name: portfolio.profiles?.name || "Unknown Provider",
-          provider_email: portfolio.profiles?.email || ""
-        }))
+        const transformed = (portfoliosData || []).map((portfolio: any) => {
+          const providerReviews = (reviewsData || []).filter((r: any) => r.provider_id === portfolio.provider_id)
+          const ratings = providerReviews.map((r: any) => r.rating)
+          const avgRating = ratings.length > 0 ? (ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length) : 0
+          return {
+            ...portfolio,
+            provider_name: portfolio.profiles?.name || "Unknown Provider",
+            provider_email: portfolio.profiles?.email || "",
+            avg_rating: avgRating,
+            reviews_count: ratings.length
+          }
+        })
         setPortfolios(transformed)
         setFilteredPortfolios(transformed)
       }
@@ -101,7 +110,7 @@ function FreelancersContent() {
       setLoading(false)
     }
 
-    fetchPortfolios()
+    fetchPortfoliosAndReviews()
   }, [])
 
   // Search/filter logic
@@ -247,10 +256,10 @@ function FreelancersContent() {
                       <div className="flex items-center gap-1 text-yellow-600">
                         <Star className="h-4 w-4 fill-current" />
                         <span className="font-semibold">
-                          {portfolio.rating?.toFixed(1) ?? "5.0"}
+                          {portfolio.avg_rating?.toFixed(1) ?? "-"}
                         </span>
                         <span className="text-gray-500">
-                          ({portfolio.reviews_count ?? 0} reviews)
+                          ({portfolio.reviews_count} reviews)
                         </span>
                       </div>
                       {portfolio.location && (
@@ -308,7 +317,7 @@ function FreelancersContent() {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      <Link href={`/portfolio/${portfolio.id}`}>
+                      <Link href={`/portfolio/${portfolio.provider_id}`}>
                         <Button className="w-full bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg rounded-xl py-3 transition-all duration-300">
                           <Eye className="h-4 w-4 mr-2" />
                           View Full Portfolio

@@ -122,6 +122,14 @@ export interface Job {
   updated_at: string
 }
 
+export interface ProvidersWorkedWith {
+  id: string
+  client_id: string
+  provider_id: string
+  job_id: string
+  created_at: string
+}
+
 export interface JobApplication {
   id: string
   job_id: string
@@ -130,6 +138,7 @@ export interface JobApplication {
   proposed_rate?: number
   estimated_duration?: string
   status: 'pending' | 'accepted' | 'rejected'
+  provider_marked_done?: boolean
   created_at: string
   updated_at: string
 }

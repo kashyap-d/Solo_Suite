@@ -57,6 +57,8 @@ function PortfolioDetailContent() {
   const [portfolio, setPortfolio] = useState<PortfolioWithProvider | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [reviews, setReviews] = useState<any[]>([])
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
 
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -94,6 +96,25 @@ function PortfolioDetailContent() {
 
     fetchPortfolio()
   }, [params.id])
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!params.id) return
+      const { data, error } = await supabase
+        .from("reviews")
+        .select(`rating, review_text, created_at, client_id, profiles:profiles!reviews_client_id_fkey(name)`)
+        .eq("provider_id", params.id)
+        .order("created_at", { ascending: false })
+      if (!error && data) setReviews(data)
+    }
+    fetchReviews()
+  }, [params.id])
+
+  // Sort reviews based on sortOrder
+  const sortedReviews = [...reviews].sort((a, b) => {
+    if (sortOrder === 'desc') return b.rating - a.rating
+    return a.rating - b.rating
+  })
 
   if (loading) {
     return (
@@ -311,6 +332,47 @@ function PortfolioDetailContent() {
                         </a>
                       ))}
                     </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Reviews Section */}
+            <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  Reviews
+                  <select
+                    className="ml-4 px-2 py-1 rounded border border-gray-300 text-sm bg-white dark:bg-gray-900 dark:text-white"
+                    value={sortOrder}
+                    onChange={e => setSortOrder(e.target.value as 'desc' | 'asc')}
+                  >
+                    <option value="desc">High to Low</option>
+                    <option value="asc">Low to High</option>
+                  </select>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {reviews.length === 0 ? (
+                  <div className="text-muted-foreground">No reviews yet.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {sortedReviews.map((review, idx) => (
+                      <div key={idx} className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          <span className="font-semibold text-yellow-700">{review.rating}/5</span>
+                          <span className="text-xs text-gray-400 ml-2">{new Date(review.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div className="text-sm text-gray-900 dark:text-gray-100 mb-1">
+                          {review.profiles?.name ? <span className="font-medium text-white">{review.profiles.name}</span> : <span className="italic text-gray-400">Anonymous</span>}
+                        </div>
+                        <div className="text-gray-700 dark:text-gray-300 text-sm">
+                          {review.review_text || <span className="italic text-gray-400">No comment</span>}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>

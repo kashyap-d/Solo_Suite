@@ -36,7 +36,11 @@ interface JobWithApplications extends Job {
   job_applications: {
     id: string
     created_at: string
+    status: string
+    provider_marked_done: boolean
+    provider_id: string
     profiles: {
+      id: string
       name: string
     } | null
   }[]
@@ -64,7 +68,10 @@ export function ClientDashboard() {
         job_applications (
           id,
           created_at,
-          profiles ( name )
+          status,
+          provider_marked_done,
+          provider_id,
+          profiles ( id, name )
         )
       `)
       .eq("client_id", user.id)
@@ -183,6 +190,12 @@ export function ClientDashboard() {
                 Find Freelancers
               </Button>
             </Link>
+            <Link href="/dashboard/providers-worked-with">
+              <Button variant="outline">
+                <Briefcase className="h-4 w-4 mr-2" />
+                Providers Worked With
+              </Button>
+            </Link>
             <Link href="/dashboard/post-job">
               <Button className="bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg transition-all duration-300">
                 <Plus className="h-4 w-4 mr-2" />
@@ -245,6 +258,31 @@ export function ClientDashboard() {
                       <Trash className="h-4 w-4 mr-2" />
                       Delete
                     </Button>
+                    {/* Finish Job Button */}
+                    {job.status !== "completed" && job.job_applications.length > 0 && job.job_applications.filter(app => app.status === "accepted").length > 0 && job.job_applications.filter(app => app.status === "accepted").every(app => app.provider_marked_done) && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={async () => {
+                          // Mark job as completed
+                          await supabase.from("jobs").update({ status: "completed" }).eq("id", job.id)
+                          // Add providers to providers_worked_with
+                          const acceptedProviders = job.job_applications.filter(app => app.status === "accepted")
+                          for (const app of acceptedProviders) {
+                            await supabase.from("providers_worked_with").upsert({
+                              client_id: user?.id,
+                              provider_id: app.profiles?.id || app.provider_id,
+                              job_id: job.id,
+                              created_at: new Date().toISOString()
+                            }, { onConflict: "client_id,provider_id,job_id" })
+                          }
+                          // Optionally, refresh jobs
+                          fetchJobsAndApplications()
+                        }}
+                      >
+                        Finish Job
+                      </Button>
+                    )}
                   </div>
                 </Card>
               ))}

@@ -152,6 +152,12 @@ export function ProviderDashboard() {
             My Applications
           </Button>
         </Link>
+        <Link href="/dashboard/my-jobs-provider">
+          <Button variant="outline">
+            <Briefcase className="h-4 w-4 mr-2" />
+            My Jobs
+          </Button>
+        </Link>
       </div>
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

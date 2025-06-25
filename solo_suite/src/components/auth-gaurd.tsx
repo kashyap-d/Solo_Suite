@@ -16,7 +16,7 @@ export function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
 
   useEffect(() => {
     if (!loading && requireAuth && (!user || !userProfile)) {
-      router.push("/auth/signin")
+      router.push("/")
     }
   }, [user, userProfile, loading, requireAuth, router])
 
