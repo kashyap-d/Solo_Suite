@@ -59,6 +59,8 @@ function PortfolioDetailContent() {
   const [error, setError] = useState("")
   const [reviews, setReviews] = useState<any[]>([])
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
+  const [avgRating, setAvgRating] = useState<number | null>(null)
+  const [reviewsCount, setReviewsCount] = useState<number>(0)
 
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -102,10 +104,19 @@ function PortfolioDetailContent() {
       if (!params.id) return
       const { data, error } = await supabase
         .from("reviews")
-        .select(`rating, review_text, created_at, client_id, profiles:profiles!reviews_client_id_fkey(name)`)
+        .select(`rating, review_text, created_at, client_id, job_id, profiles:profiles!reviews_client_id_fkey(name), job:jobs(title)`)
         .eq("provider_id", params.id)
         .order("created_at", { ascending: false })
-      if (!error && data) setReviews(data)
+      if (!error && data) {
+        setReviews(data)
+        const ratings = data.map((r: any) => r.rating)
+        setReviewsCount(ratings.length)
+        setAvgRating(ratings.length > 0 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length : null)
+      } else {
+        setReviews([])
+        setReviewsCount(0)
+        setAvgRating(null)
+      }
     }
     fetchReviews()
   }, [params.id])
@@ -216,9 +227,9 @@ function PortfolioDetailContent() {
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                         <span className="font-semibold text-yellow-600">
-                          {portfolio.rating?.toFixed(1) ?? "5.0"}
+                          {avgRating !== null ? avgRating.toFixed(1) : "-"}
                         </span>
-                        <span>({portfolio.reviews_count ?? 0} reviews)</span>
+                        <span>({reviewsCount} reviews)</span>
                       </div>
                       {portfolio.location && (
                         <div className="flex items-center gap-1">
@@ -338,38 +349,66 @@ function PortfolioDetailContent() {
             </Card>
 
             {/* Reviews Section */}
-            <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
+            <Card className="border-0 shadow-xl bg-white dark:bg-gray-800 rounded-2xl">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold">
                   <Star className="h-5 w-5 text-yellow-500" />
-                  Reviews
+                  <span className="text-gray-800 dark:text-white">Reviews</span>
                   <select
-                    className="ml-4 px-2 py-1 rounded border border-gray-300 text-sm bg-white dark:bg-gray-900 dark:text-white"
+                    className="ml-auto px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-800 dark:text-white bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
                     value={sortOrder}
                     onChange={e => setSortOrder(e.target.value as 'desc' | 'asc')}
                   >
-                    <option value="desc">High to Low</option>
-                    <option value="asc">Low to High</option>
+                    <option value="desc">⬇ High to Low</option>
+                    <option value="asc">⬆ Low to High</option>
                   </select>
                 </CardTitle>
               </CardHeader>
+
               <CardContent>
                 {reviews.length === 0 ? (
-                  <div className="text-muted-foreground">No reviews yet.</div>
+                  <div className="text-muted-foreground text-center py-6">No reviews yet.</div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {sortedReviews.map((review, idx) => (
-                      <div key={idx} className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Star className="h-4 w-4 text-yellow-500" />
-                          <span className="font-semibold text-yellow-700">{review.rating}/5</span>
-                          <span className="text-xs text-gray-400 ml-2">{new Date(review.created_at).toLocaleDateString()}</span>
+                      <div
+                        key={idx}
+                        className="group rounded-2xl border border-gray-200 dark:border-gray-700 p-6 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-200"
+                      >
+                        {/* Top Row: Rating + Date + Job Title */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
+                          <div className="flex items-center gap-2">
+                            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                            <span className="font-bold text-yellow-700 text-lg">{review.rating}/5</span>
+                            <span className="text-xs text-gray-400 ml-2">
+                              {new Date(review.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          {review.job?.title && (
+                            <span className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-md">
+                              For: {review.job.title}
+                            </span>
+                          )}
                         </div>
-                        <div className="text-sm text-gray-900 dark:text-gray-100 mb-1">
-                          {review.profiles?.name ? <span className="font-medium text-white">{review.profiles.name}</span> : <span className="italic text-gray-400">Anonymous</span>}
+
+                        {/* Reviewer Name */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <User className="h-4 w-4 text-indigo-400 dark:text-indigo-300" />
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {review.profiles?.name || (
+                              <span className="italic text-gray-400">Anonymous</span>
+                            )}
+                          </span>
                         </div>
-                        <div className="text-gray-700 dark:text-gray-300 text-sm">
-                          {review.review_text || <span className="italic text-gray-400">No comment</span>}
+
+                        {/* Review Body */}
+                        <div className="text-indigo-700 dark:text-indigo-200 text-base mt-1 leading-relaxed italic border-l-4 border-indigo-300 dark:border-indigo-600 pl-4">
+                          {review.review_text ? (
+                            <>“{review.review_text}”</>
+                          ) : (
+                            <span className="italic text-gray-400">No comment provided.</span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -377,6 +416,7 @@ function PortfolioDetailContent() {
                 )}
               </CardContent>
             </Card>
+
           </div>
 
           {/* Sidebar */}

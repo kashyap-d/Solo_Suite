@@ -60,6 +60,8 @@ function ViewPortfolioContent() {
   const [portfolio, setPortfolio] = useState<PortfolioWithProvider | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [avgRating, setAvgRating] = useState<number | null>(null)
+  const [reviewsCount, setReviewsCount] = useState<number>(0)
 
   useEffect(() => {
     // Redirect clients to dashboard
@@ -70,22 +72,15 @@ function ViewPortfolioContent() {
 
     if (!user) return
 
-    const fetchPortfolio = async () => {
+    const fetchPortfolioAndReviews = async () => {
       setLoading(true)
       setError("")
-      
+      // Fetch portfolio
       const { data, error } = await supabase
         .from("portfolios")
-        .select(`
-          *,
-          profiles!portfolios_provider_id_fkey (
-            name,
-            email
-          )
-        `)
+        .select(`*, profiles!portfolios_provider_id_fkey ( name, email )`)
         .eq("provider_id", user.id)
         .single()
-      
       if (error) {
         if (error.code === 'PGRST116') {
           setError("You haven't created a portfolio yet.")
@@ -93,6 +88,8 @@ function ViewPortfolioContent() {
           setError("Failed to load portfolio.")
         }
         setPortfolio(null)
+        setAvgRating(null)
+        setReviewsCount(0)
       } else {
         const transformed = {
           ...data,
@@ -100,11 +97,24 @@ function ViewPortfolioContent() {
           provider_email: data.profiles?.email || ""
         }
         setPortfolio(transformed)
+        // Fetch reviews for this provider
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from("reviews")
+          .select("rating")
+          .eq("provider_id", user.id)
+        if (reviewsError) {
+          setAvgRating(null)
+          setReviewsCount(0)
+        } else {
+          const ratings = (reviewsData || []).map((r: any) => r.rating)
+          setReviewsCount(ratings.length)
+          setAvgRating(ratings.length > 0 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length : null)
+        }
       }
       setLoading(false)
     }
 
-    fetchPortfolio()
+    fetchPortfolioAndReviews()
   }, [user, userProfile, router])
 
   if (userProfile?.role === "client") {
@@ -207,9 +217,9 @@ function ViewPortfolioContent() {
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                           <span className="font-semibold text-yellow-600">
-                            {portfolio.rating?.toFixed(1) ?? "5.0"}
+                            {avgRating !== null ? avgRating.toFixed(1) : "-"}
                           </span>
-                          <span>({portfolio.reviews_count ?? 0} reviews)</span>
+                          <span>({reviewsCount} reviews)</span>
                         </div>
                         {portfolio.location && (
                           <div className="flex items-center gap-1">

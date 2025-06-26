@@ -21,14 +21,8 @@ interface ProviderWorkedWith {
   review?: { id: string, rating: number, review_text: string }
 }
 
-// Utility Functions for Avatars
 const getInitials = (name: string) =>
-  name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
+  name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 
 const getGradientColors = (name: string) => {
   const gradients = [
@@ -58,30 +52,37 @@ export default function ProvidersWorkedWithPage() {
     const fetchProviders = async () => {
       setLoading(true)
       setError("")
-      // Fetch providers worked with, join provider profile and job title
       const { data, error } = await supabase
         .from("providers_worked_with")
-        .select(`*, provider_profile:profiles!provider_id(name), job:jobs(title)`) // join on provider_id and job_id
+        .select(`*, provider_profile:profiles!provider_id(name), job:jobs(title)`)
         .eq("client_id", user.id)
         .order("created_at", { ascending: false })
       if (error) {
         setError("Failed to load providers.")
         setProviders([])
-      } else {
-        setProviders(data as ProviderWorkedWith[])
+        setLoading(false)
+        return
       }
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("reviews")
+        .select("id, provider_id, job_id, rating, review_text")
+        .eq("client_id", user.id)
+      const providersWithReview = (data as ProviderWorkedWith[]).map((provider) => {
+        const review = (reviewsData || []).find(
+          (r: any) => r.provider_id === provider.provider_id && r.job_id === provider.job_id
+        )
+        return { ...provider, review }
+      })
+      setProviders(providersWithReview)
       setLoading(false)
     }
     fetchProviders()
-  }, [user])
+  }, [user, submitting])
 
   const handleReviewChange = (id: string, field: "rating" | "review_text", value: any) => {
     setReviewInputs((prev) => ({
       ...prev,
-      [id]: {
-        ...prev[id],
-        [field]: value
-      }
+      [id]: { ...prev[id], [field]: value }
     }))
   }
 
@@ -97,70 +98,74 @@ export default function ProvidersWorkedWithPage() {
       review_text: input.review_text || "",
       created_at: new Date().toISOString()
     })
-    setProviders((prev) => prev.map(p => p.id === provider.id ? { ...p, review: { ...input, id: "new" } } : p))
     setSubmitting(null)
   }
 
   if (userProfile?.role === "provider") return null
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" onClick={() => window.location.href = "/dashboard"}
-            className="flex items-center gap-2">
+        <div className="flex items-center gap-4 mb-8">
+          <Button variant="outline" onClick={() => window.location.href = "/dashboard"} className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
             Return to Dashboard
           </Button>
-          <h1 className="text-3xl font-bold">Providers Worked With</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Providers Worked With</h1>
         </div>
-        {loading && <div>Loading...</div>}
-        {error && <div className="text-red-500">{error}</div>}
+
+        {loading && <div className="text-center text-muted-foreground">Loading providers...</div>}
+        {error && <div className="text-red-500 text-center mb-4">{error}</div>}
         {!loading && providers.length === 0 && (
-          <div className="text-muted-foreground">No providers yet.</div>
+          <div className="text-muted-foreground text-center">You haven't worked with any providers yet.</div>
         )}
-        <div className="space-y-4">
+
+        <div className="space-y-6">
           {providers.map((provider) => (
-            <Card key={provider.id} className="p-6 flex flex-col md:flex-row md:items-center md:justify-between shadow-lg border-0 bg-white dark:bg-gray-800 hover:scale-[1.01] transition-all duration-200">
+            <Card
+              key={provider.id}
+              className="p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg border-0 bg-white dark:bg-gray-800 hover:shadow-xl hover:scale-[1.01] transition-all duration-200 rounded-2xl"
+            >
               <div className="flex items-center gap-4">
-                {/* Avatar */}
                 <div
-                  className={`w-14 h-14 bg-gradient-to-br ${getGradientColors(
+                  className={`w-16 h-16 bg-gradient-to-br ${getGradientColors(
                     provider.provider_profile?.name || "Provider"
-                  )} rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg transition-transform duration-300`}
+                  )} rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg`}
                 >
                   {getInitials(provider.provider_profile?.name || "P")}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-xl text-gray-900 dark:text-white mb-1">
+                  <h3 className="font-semibold text-xl text-gray-900 dark:text-white">
                     {provider.provider_profile?.name || "Provider"}
                   </h3>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <Badge>{provider.job?.title || "Job"}</Badge>
-                    <span>Worked on {new Date(provider.created_at).toLocaleDateString()}</span>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                    <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 border-0">
+                      {provider.job?.title || "Job"}
+                    </Badge>
+                    <span className="text-xs">Worked on {new Date(provider.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
               </div>
-              <div className="mt-6 md:mt-0 md:text-right flex flex-col items-start md:items-end gap-2">
+
+              <div className="w-full md:w-64 mt-4 md:mt-0">
                 {provider.review ? (
-                  <Badge variant="secondary">Reviewed</Badge>
+                  <Badge variant="outline" className="text-green-700 dark:text-green-300 border-green-300 dark:border-green-600">Reviewed</Badge>
                 ) : (
-                  <form onSubmit={e => { e.preventDefault(); handleSubmitReview(provider) }} className="flex flex-col gap-2 w-full md:w-64">
+                  <form onSubmit={e => { e.preventDefault(); handleSubmitReview(provider) }} className="space-y-2">
                     <Input
                       type="number"
                       min={1}
                       max={5}
-                      placeholder="Rating (1-5)"
+                      placeholder="Rating (1–5)"
                       value={reviewInputs[provider.id]?.rating || ""}
                       onChange={e => handleReviewChange(provider.id, "rating", Number(e.target.value))}
-                      className="w-full"
                       required
                     />
                     <Textarea
                       placeholder="Write a review (optional)"
                       value={reviewInputs[provider.id]?.review_text || ""}
                       onChange={e => handleReviewChange(provider.id, "review_text", e.target.value)}
-                      className="w-full min-h-[60px]"
+                      className="min-h-[60px]"
                     />
                     <Button type="submit" disabled={submitting === provider.id} className="w-full">
                       {submitting === provider.id ? "Submitting..." : "Submit Review"}
@@ -174,4 +179,4 @@ export default function ProvidersWorkedWithPage() {
       </div>
     </div>
   )
-} 
+}
