@@ -143,6 +143,13 @@ export interface JobApplication {
   updated_at: string
 }
 
+export interface Bookmark {
+  id: string
+  user_id: string
+  job_id: string
+  created_at: string
+}
+
 // Type for portfolio creation/editing (excludes client-managed fields)
 export type PortfolioFormData = Omit<Portfolio, 'id' | 'provider_id' | 'rating' | 'reviews_count' | 'created_at' | 'updated_at'>;
 
@@ -151,3 +158,6 @@ export type JobFormData = Omit<Job, 'id' | 'client_id' | 'views_count' | 'applic
 
 // Type for job application creation
 export type JobApplicationFormData = Omit<JobApplication, 'id' | 'created_at' | 'updated_at'>;
+
+// Type for bookmark creation
+export type BookmarkFormData = Omit<Bookmark, 'id' | 'created_at'>;

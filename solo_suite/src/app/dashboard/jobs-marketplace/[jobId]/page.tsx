@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog"
 import { deleteJob } from "@/actions/ai-actions"
 import { toast } from "sonner"
+import { BookmarkButton } from "@/components/bookmark-button"
 
 interface JobWithClient extends Job {
   client_name: string
@@ -157,13 +158,21 @@ function JobDetailsContent() {
   const renderActionButtons = () => {
     if (userProfile?.role === 'provider') {
       return (
-        <Button
-          onClick={() => router.push(`/dashboard/jobs-marketplace/${job.id}/apply`)}
-          className="bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg transition-all duration-300"
-        >
-          <Send className="h-4 w-4 mr-2" />
-          Apply Now
-        </Button>
+        <div className="flex gap-3">
+          <BookmarkButton 
+            jobId={job.id}
+            variant="outline"
+            className="border-2 border-yellow-200 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+            showText={true}
+          />
+          <Button
+            onClick={() => router.push(`/dashboard/jobs-marketplace/${job.id}/apply`)}
+            className="bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg transition-all duration-300"
+          >
+            <Send className="h-4 w-4 mr-2" />
+            Apply Now
+          </Button>
+        </div>
       )
     }
 

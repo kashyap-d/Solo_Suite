@@ -5,7 +5,7 @@ import { AITaskboard } from "./ai-taskboard"
 import { CalendarExport } from "./calender-export"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, Eye, FileText } from "lucide-react"
+import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, Eye, FileText, Bookmark } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, type Task } from "@/lib/supabaseClient"
@@ -144,6 +144,12 @@ export function ProviderDashboard() {
           <Button variant="outline">
             <Briefcase className="h-4 w-4 mr-2" />
             View Current Jobs
+          </Button>
+        </Link>
+        <Link href="/dashboard/saved-jobs">
+          <Button variant="outline">
+            <Bookmark className="h-4 w-4 mr-2" />
+            Saved Jobs
           </Button>
         </Link>
         <Link href="/dashboard/my-applications">
