@@ -47,29 +47,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const getInitialSession = async () => {
-      try {
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        const { data: userData, error: userError } = await supabase.auth.getUser();
+      let retryCount = 0;
 
-        // If session or user is invalid, treat as broken session
-        if (sessionError || userError || !sessionData.session || !userData?.user) {
-          console.warn('❌ Invalid or expired session. Clearing and reloading.');
-          localStorage.clear();
-          await supabase.auth.signOut();
-          location.reload();
-          return;
+      while (retryCount < 3) {
+        try {
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+
+          if (sessionData.session && userData?.user && !sessionError && !userError) {
+            setUser(userData.user);
+            await fetchUserProfile(userData.user.id);
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.warn(`Session check attempt ${retryCount + 1} failed`, err);
         }
 
-        setUser(userData.user);
-        await fetchUserProfile(userData.user.id);
-      } catch (err) {
-        console.error('Unexpected session error:', err);
-        localStorage.clear();
-        await supabase.auth.signOut();
-        location.reload();
-      } finally {
-        setLoading(false);
+        retryCount++;
+        await new Promise((res) => setTimeout(res, 300)); // 300ms delay
       }
+
+      console.warn('❌ Could not validate session after retries. Clearing and reloading.');
+      localStorage.clear();
+      await supabase.auth.signOut();
+      location.reload();
     };
 
     getInitialSession();
