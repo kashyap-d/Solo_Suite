@@ -4,6 +4,7 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase, type UserProfile } from "@/lib/supabaseClient"
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   const fetchUserProfile = useCallback(async (userId: string) => {
     try {
@@ -73,6 +75,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe()
   }, [fetchUserProfile])
+
+  useEffect(() => {
+    if (loading) {
+      const timeout = setTimeout(() => {
+        setLoadingError("Could not connect to the server. Please check your connection or try again later.");
+        setLoading(false);
+      }, 10000); // 10 seconds
+      return () => clearTimeout(timeout);
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    const refreshSession = async () => {
+      try {
+        await supabase.auth.getSession();
+      } catch (err) {
+        toast.error("Lost connection to the server. Reloading page...");
+        setTimeout(() => window.location.reload(), 1000);
+      }
+    };
+
+    const handler = () => { refreshSession(); };
+    document.addEventListener("visibilitychange", handler);
+    window.addEventListener("online", handler);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handler);
+      window.removeEventListener("online", handler);
+    };
+  }, []);
 
   const signUp = async (email: string, password: string, name: string, role: "provider" | "client") => {
     try {
@@ -130,6 +162,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
   }
 
+  if (loading) {
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+  }
+  if (loadingError) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+        <p style={{ color: 'red', marginBottom: 16 }}>{loadingError}</p>
+        <button onClick={() => window.location.reload()} style={{ padding: '8px 16px', fontSize: 16 }}>Retry</button>
+      </div>
+    );
+  }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
