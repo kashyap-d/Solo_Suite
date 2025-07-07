@@ -25,63 +25,81 @@ const AuthContext = createContext<AuthContextType>({
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
   const fetchUserProfile = useCallback(async (userId: string) => {
     try {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-      if (error) throw error
-      setUserProfile(data)
+      if (error) throw error;
+      setUserProfile(data);
     } catch (error) {
-      console.error("Error fetching user profile:", error)
+      console.error('Error fetching user profile:', error);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    // Get initial session
     const getInitialSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        const { data: userData, error: userError } = await supabase.auth.getUser();
 
-      if (session?.user) {
-        await fetchUserProfile(session.user.id)
+        // If session or user is invalid, treat as broken session
+        if (sessionError || userError || !sessionData.session || !userData?.user) {
+          console.warn('❌ Invalid or expired session. Clearing and reloading.');
+          localStorage.clear();
+          await supabase.auth.signOut();
+          location.reload();
+          return;
+        }
+
+        setUser(userData.user);
+        await fetchUserProfile(userData.user.id);
+      } catch (err) {
+        console.error('Unexpected session error:', err);
+        localStorage.clear();
+        await supabase.auth.signOut();
+        location.reload();
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setLoading(false)
-    }
+    getInitialSession();
 
-    getInitialSession()
-
-    // Listen for auth changes
+    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null)
+      setUser(session?.user ?? null);
 
       if (session?.user) {
-        await fetchUserProfile(session.user.id)
+        await fetchUserProfile(session.user.id);
       } else {
-        setUserProfile(null)
+        setUserProfile(null);
       }
 
-      setLoading(false)
-    })
+      setLoading(false);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [fetchUserProfile])
+    return () => subscription.unsubscribe();
+  }, [fetchUserProfile]);
 
   useEffect(() => {
     if (loading) {
       const timeout = setTimeout(() => {
-        setLoadingError("Could not connect to the server. Please check your connection or try again later.");
+        setLoadingError(
+          'Could not connect to the server. Please check your connection or try again later.'
+        );
         setLoading(false);
-      }, 10000); // 10 seconds
+      }, 10000); // 10 seconds timeout
       return () => clearTimeout(timeout);
     }
   }, [loading]);
@@ -89,44 +107,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const refreshSession = async () => {
       try {
-        await supabase.auth.getSession();
+        await supabase.auth.getSession(); // just to trigger revalidation
       } catch (err) {
-        toast.error("Lost connection to the server. Reloading page...");
+        toast.error('Lost connection to the server. Reloading...');
         setTimeout(() => window.location.reload(), 1000);
       }
     };
 
-    const handler = () => { refreshSession(); };
-    document.addEventListener("visibilitychange", handler);
-    window.addEventListener("online", handler);
+    const handler = () => refreshSession();
+    document.addEventListener('visibilitychange', handler);
+    window.addEventListener('online', handler);
 
     return () => {
-      document.removeEventListener("visibilitychange", handler);
-      window.removeEventListener("online", handler);
+      document.removeEventListener('visibilitychange', handler);
+      window.removeEventListener('online', handler);
     };
   }, []);
 
-  const signUp = async (email: string, password: string, name: string, role: "provider" | "client") => {
+  const signUp = async (
+    email: string,
+    password: string,
+    name: string,
+    role: 'provider' | 'client'
+  ) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
       if (data.user) {
-        // Create user profile
-        const { error: profileError } = await supabase.from("profiles").insert([
+        const { error: profileError } = await supabase.from('profiles').insert([
           {
             id: data.user.id,
             email: data.user.email,
             name,
             role,
           },
-        ])
+        ]);
 
-        if (profileError) throw profileError
+        if (profileError) throw profileError;
       }
 
       return { user: data.user };
@@ -140,18 +162,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
+      });
 
-      if (error) throw error
-      return {}
+      if (error) throw error;
+      return {};
     } catch (error: any) {
-      return { error: error.message }
+      return { error: error.message };
     }
-  }
+  };
 
   const signOut = async () => {
-    await supabase.auth.signOut()
-  }
+    await supabase.auth.signOut();
+    setUser(null);
+    setUserProfile(null);
+  };
 
   const value = {
     user,
@@ -160,26 +184,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signIn,
     signOut,
-  }
+  };
 
   if (loading) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
-  }
-  if (loadingError) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-        <p style={{ color: 'red', marginBottom: 16 }}>{loadingError}</p>
-        <button onClick={() => window.location.reload()} style={{ padding: '8px 16px', fontSize: 16 }}>Retry</button>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        Loading...
       </div>
     );
   }
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+
+  if (loadingError) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+        }}
+      >
+        <p style={{ color: 'red', marginBottom: 16 }}>{loadingError}</p>
+        <button
+          onClick={() => window.location.reload()}
+          style={{ padding: '8px 16px', fontSize: 16 }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
+  return context;
 }
