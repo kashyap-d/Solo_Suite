@@ -5,13 +5,16 @@ import { AITaskboard } from "./ai-taskboard"
 import { CalendarExport } from "./calender-export"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, Eye, FileText, Bookmark } from "lucide-react"
+import { Briefcase, DollarSign, Users, TrendingUp, Calendar, MessageSquare, Eye, FileText, Bookmark, Menu } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, type Task } from "@/lib/supabaseClient"
 import { InvoiceGenerator } from "./invoice-generator"
 import { Button } from "@/components/ui/button"
 import ProfileCompletenessMeter from "@/components/profile-completeness-meter"
+// If you have shadcn/ui Drawer, import it. If not, you will need to add it to your project.
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { DialogTitle } from "@/components/ui/dialog"
 
 export function ProviderDashboard() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -23,6 +26,7 @@ export function ProviderDashboard() {
   const [loading, setLoading] = useState(true)
   const [portfolio, setPortfolio] = useState<any>(null)
   const [portfolioLoading, setPortfolioLoading] = useState(true)
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const { user } = useAuth()
 
@@ -134,12 +138,44 @@ export function ProviderDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Profile Completeness Meter */}
-      {(!portfolioLoading && calculateCompleteness() < 100) && (
-        <ProfileCompletenessMeter completeness={calculateCompleteness()} />
-      )}
-      {/* portfolio button */}
-      <div className="flex justify-end gap-4">
+      {/* Mobile Navigation Drawer */}
+      <div className="md:hidden flex justify-between items-center px-4 pt-2">
+        <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="icon" aria-label="Open navigation menu">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="p-0 max-w-xs w-full">
+            <DialogTitle className="px-4 pt-4 pb-2">Job Manager</DialogTitle>
+            <nav className="flex flex-col gap-2 p-4">
+              <Link href="/dashboard/jobs-marketplace" onClick={() => setDrawerOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">
+                  <Briefcase className="h-4 w-4 mr-2" /> View Current Jobs
+                </Button>
+              </Link>
+              <Link href="/dashboard/saved-jobs" onClick={() => setDrawerOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">
+                  <Bookmark className="h-4 w-4 mr-2" /> Saved Jobs
+                </Button>
+              </Link>
+              <Link href="/dashboard/my-applications" onClick={() => setDrawerOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">
+                  <FileText className="h-4 w-4 mr-2" /> My Applications
+                </Button>
+              </Link>
+              <Link href="/dashboard/my-jobs-provider" onClick={() => setDrawerOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">
+                  <Briefcase className="h-4 w-4 mr-2" /> My Jobs
+                </Button>
+              </Link>
+            </nav>
+          </DialogContent>
+        </Dialog>
+        <span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Job Manager</span>
+      </div>
+      {/* Desktop Action Buttons */}
+      <div className="hidden md:flex justify-end gap-4">
         <Link href="/dashboard/jobs-marketplace">
           <Button variant="outline">
             <Briefcase className="h-4 w-4 mr-2" />
@@ -165,9 +201,15 @@ export function ProviderDashboard() {
           </Button>
         </Link>
       </div>
+      {/* Profile Completeness Meter */}
+      {(!portfolioLoading && calculateCompleteness() < 100) && (
+        <div className="px-2 md:px-0">
+          <ProfileCompletenessMeter completeness={calculateCompleteness()} />
+        </div>
+      )}
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 px-2 md:px-0">
+        <Card className="w-full">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -180,8 +222,7 @@ export function ProviderDashboard() {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
+        <Card className="w-full">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -194,8 +235,7 @@ export function ProviderDashboard() {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
+        <Card className="w-full">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -211,10 +251,12 @@ export function ProviderDashboard() {
       </div>
 
       {/* AI Taskboard */}
-      <AITaskboard />
+      <div className="px-2 md:px-0">
+        <AITaskboard />
+      </div>
 
       {/* Portfolio Management */}
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -243,7 +285,7 @@ export function ProviderDashboard() {
       </Card>
 
       {/* Invoice Generator */}
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -256,7 +298,7 @@ export function ProviderDashboard() {
       </Card>
 
       {/* Calendar Export */}
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />

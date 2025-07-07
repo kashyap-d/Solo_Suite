@@ -1552,25 +1552,25 @@ export function AITaskboard() {
               className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700"
               onClick={toggleTasksListCollapse}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full">
+                <div className="flex flex-wrap items-center gap-2 w-full">
                   {isTasksListCollapsed ? (
                     <ChevronRight className="h-5 w-5 text-gray-500" />
                   ) : (
                     <ChevronDown className="h-5 w-5 text-gray-500" />
                   )}
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                     {selectedClient !== "all" || selectedProject !== "all" || selectedStatus !== "all" || selectedPriority !== "all" ? "Filtered Tasks" : "Your Tasks"}
                   </h3>
-                  <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700">
+                  <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700 text-xs sm:text-sm px-2 py-1">
                     {filteredTasks.length} tasks
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700 text-xs sm:text-sm px-2 py-1">
                     {completedTasks}/{filteredTasks.length} completed
                   </Badge>
-                  <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                  <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs sm:text-sm px-2 py-1">
                     {completedHours}/{totalHours}h done
                   </Badge>
                 </div>
@@ -1638,25 +1638,25 @@ export function AITaskboard() {
                                 layout
                                 className="w-full"
                               >
-                                <Card className="hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
+                                <Card className="hover:shadow-md transition-shadow bg-white dark:bg-gray-800 w-full">
                                   <CardContent className="p-0">
                                     {/* Collapsible Header */}
                                     <div 
                                       className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                       onClick={() => toggleTaskCollapse(task.id)}
                                     >
-                                      <div className="flex items-start justify-between">
+                                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                                         <div className="flex-1">
-                                          <div className="flex items-center gap-2">
+                                          <div className="flex items-center gap-2 flex-wrap">
                                             {collapsedTasks.has(task.id) ? (
                                               <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
                                             ) : (
                                               <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
                                             )}
-                                            <h4 className="font-medium text-lg text-gray-900 dark:text-white">{task.title}</h4>
+                                            <h4 className="font-medium text-base sm:text-lg text-gray-900 dark:text-white break-words max-w-xs sm:max-w-none">{task.title}</h4>
                                           </div>
                                           {(task.client_name || task.project_name) && (
-                                            <div className="flex items-center gap-2 mt-1 ml-6">
+                                            <div className="flex flex-wrap items-center gap-2 mt-1 ml-6">
                                               {task.client_name && (
                                                 <Badge variant="outline" className="text-xs">
                                                   <Users className="h-3 w-3 mr-1" />
@@ -1673,7 +1673,7 @@ export function AITaskboard() {
                                             </div>
                                           )}
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
                                           <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
                                           {getStatusIcon(task.status)}
                                         </div>
@@ -1688,9 +1688,9 @@ export function AITaskboard() {
                                           animate={{ opacity: 1, height: "auto" }}
                                           exit={{ opacity: 0, height: 0 }}
                                           transition={{ duration: 0.3, ease: "easeInOut" }}
-                                          className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 overflow-hidden"
+                                          className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 overflow-x-auto"
                                         >
-                                          <p className="text-gray-600 dark:text-gray-300 mb-3 mt-3">{task.description}</p>
+                                          <p className="text-gray-600 dark:text-gray-300 mb-3 mt-3 text-sm break-words max-w-full">{task.description}</p>
 
                                           {/* Task Breakdown */}
                                           <div className="mb-3">
@@ -1704,7 +1704,7 @@ export function AITaskboard() {
                                             </Button>
 
                                             <AnimatePresence>
-                                              {expandedTask === task.id && taskBreakdowns[task.id] && (
+                                              {Array.isArray(taskBreakdowns[task.id]) && (
                                                 <motion.div 
                                                   initial={{ opacity: 0, x: -20 }}
                                                   animate={{ opacity: 1, x: 0 }}
@@ -1729,12 +1729,12 @@ export function AITaskboard() {
                                             </AnimatePresence>
                                           </div>
 
-                                          <div className="flex items-center justify-between">
+                                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                                             <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                                               <Clock className="h-4 w-4" />
                                               {task.estimated_hours}h estimated
                                             </div>
-                                            <div className="flex gap-2">
+                                            <div className="flex flex-wrap gap-2">
                                               {task.status === "pending" && (
                                                 <Button
                                                   variant="outline"
@@ -1756,7 +1756,7 @@ export function AITaskboard() {
                                                 </Button>
                                               )}
                                               {task.status === "completed" && (
-                                                <Button variant="outline" size="sm" onClick={() => handleUpdateTaskStatus(task.id, "pending")}>
+                                                <Button variant="outline" size="sm" onClick={() => handleUpdateTaskStatus(task.id, "pending")}> 
                                                   <Pause className="h-4 w-4 mr-1" />
                                                   Reopen
                                                 </Button>

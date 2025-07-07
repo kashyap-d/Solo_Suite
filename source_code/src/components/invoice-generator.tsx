@@ -342,7 +342,7 @@ export function InvoiceGenerator() {
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-col sm:flex-row gap-2 w-full">
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button className="bg-green-600 hover:bg-green-700">
@@ -350,7 +350,7 @@ export function InvoiceGenerator() {
             Create Invoice
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-full">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-green-600" />
@@ -359,7 +359,7 @@ export function InvoiceGenerator() {
             <DialogDescription>Create a professional PDF invoice for your client</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
+          <div className="space-y-6 w-full">
             {/* Invoice Details */}
             <Card>
               <CardHeader>
@@ -368,7 +368,7 @@ export function InvoiceGenerator() {
                   Invoice Details
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                 <div>
                   <Label htmlFor="invoiceNumber">Invoice Number</Label>
                   <Input
@@ -406,7 +406,7 @@ export function InvoiceGenerator() {
                   Your Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 <div>
                   <Label htmlFor="providerName">Name</Label>
                   <Input
@@ -460,7 +460,7 @@ export function InvoiceGenerator() {
                   Client Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 <div>
                   <Label htmlFor="clientName">Client Name *</Label>
                   <Input
@@ -508,9 +508,9 @@ export function InvoiceGenerator() {
                   Invoice Items
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 w-full">
                 {invoiceData.items.map((item, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-lg">
+                  <div key={index} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 p-4 border rounded-lg w-full">
                     <div className="md:col-span-2">
                       <Label htmlFor={`description-${index}`}>Description</Label>
                       <Input
@@ -542,7 +542,7 @@ export function InvoiceGenerator() {
                         onChange={(e) => updateItem(index, "rate", Number.parseFloat(e.target.value) || 0)}
                       />
                     </div>
-                    <div className="flex items-end gap-2">
+                    <div className="flex items-end gap-2 w-full">
                       <div className="flex-1">
                         <Label>Amount</Label>
                         <div className="h-10 flex items-center px-3 bg-gray-50 border rounded-md">
@@ -578,8 +578,8 @@ export function InvoiceGenerator() {
                   Totals
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="space-y-4 w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                   <div>
                     <Label htmlFor="taxRate">Tax Rate (%)</Label>
                     <Input
@@ -602,16 +602,16 @@ export function InvoiceGenerator() {
                       }}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
+                  <div className="space-y-2 w-full">
+                    <div className="flex justify-between w-full">
                       <span>Subtotal:</span>
                       <span className="font-medium">${invoiceData.subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between w-full">
                       <span>Tax:</span>
                       <span className="font-medium">${(invoiceData.tax?.amount || 0).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-lg font-bold border-t pt-2">
+                    <div className="flex justify-between text-lg font-bold border-t pt-2 w-full">
                       <span>Total:</span>
                       <span className="text-green-600">${invoiceData.total.toFixed(2)}</span>
                     </div>
@@ -622,7 +622,7 @@ export function InvoiceGenerator() {
 
             {/* Notes and Payment Terms */}
             <Card>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 w-full">
                 <div>
                   <Label htmlFor="paymentTerms">Payment Terms</Label>
                   <Textarea
@@ -646,11 +646,11 @@ export function InvoiceGenerator() {
             </Card>
 
             {/* Action Buttons */}
-            <div className="flex justify-between gap-3">
+            <div className="flex flex-col sm:flex-row justify-between gap-3 w-full">
               <Button variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
                 <Button
                   onClick={handleSaveInvoice}
                   disabled={!isFormValid() || saving}
@@ -714,7 +714,7 @@ export function InvoiceGenerator() {
             View Past Invoices
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-full">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <History className="h-5 w-5 text-blue-600" />
@@ -723,7 +723,7 @@ export function InvoiceGenerator() {
             <DialogDescription>View and manage your saved invoices</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 w-full">
             {loadingInvoices ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -739,11 +739,11 @@ export function InvoiceGenerator() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 w-full">
                 {invoices.map((invoice) => (
-                  <Card key={invoice.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
+                  <Card key={invoice.id} className="hover:shadow-md transition-shadow w-full">
+                    <CardContent className="p-4 w-full">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2 w-full">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <h4 className="font-medium text-lg">{invoice.invoice_number}</h4>
@@ -762,7 +762,7 @@ export function InvoiceGenerator() {
                             <span className="font-medium text-green-600">${invoice.total.toFixed(2)}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0 w-full">
                           <Button
                             size="sm"
                             variant="outline"

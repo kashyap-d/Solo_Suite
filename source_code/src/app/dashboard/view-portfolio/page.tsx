@@ -123,30 +123,30 @@ function ViewPortfolioContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 w-full">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
             <Button
               variant="outline"
               onClick={() => router.push("/dashboard")}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 w-full sm:w-auto"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Dashboard
             </Button>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 Your Public Profile
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1 text-sm sm:text-base">
                 This is exactly how clients see your portfolio
               </p>
             </div>
           </div>
           <Button
             onClick={() => router.push("/dashboard/portfolio")}
-            className="bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg transition-all duration-300"
+            className="bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg transition-all duration-300 w-full sm:w-auto"
           >
             <Edit className="h-4 w-4 mr-2" />
             Edit Portfolio
@@ -184,17 +184,17 @@ function ViewPortfolioContent() {
         )}
 
         {!loading && !error && portfolio && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-6 w-full">
               {/* Profile Overview */}
-              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-6 mb-6">
+              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800 w-full">
+                <CardContent className="p-4 sm:p-6 w-full">
+                  <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-6 w-full">
                     <div
-                      className={`w-24 h-24 bg-gradient-to-br ${getGradientColors(
+                      className={`w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br ${getGradientColors(
                         portfolio.provider_name
-                      )} rounded-3xl flex items-center justify-center text-white font-bold text-2xl shadow-lg`}
+                      )} rounded-3xl flex items-center justify-center text-white font-bold text-xl sm:text-2xl shadow-lg`}
                     >
                       {getInitials(portfolio.provider_name)}
                     </div>
@@ -340,9 +340,9 @@ function ViewPortfolioContent() {
             </div>
 
             {/* Sidebar */}
-            <div className="space-y-6">
+            <div className="space-y-6 w-full">
               {/* Pricing Card */}
-              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
+              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800 w-full">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <DollarSign className="h-5 w-5 text-green-600" />
@@ -369,7 +369,7 @@ function ViewPortfolioContent() {
               </Card>
 
               {/* Contact Info */}
-              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
+              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800 w-full">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5 text-indigo-600" />
@@ -397,7 +397,7 @@ function ViewPortfolioContent() {
               </Card>
 
               {/* Response Time */}
-              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
+              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800 w-full">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-indigo-600" />

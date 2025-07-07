@@ -45,36 +45,36 @@ function SignUpContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-gray-950 dark:from-background dark:to-muted p-4">
+      <div className="mb-6 flex flex-col items-center">
+        {/* Brand/Logo */}
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-2 shadow-lg">
+          <span className="text-white text-2xl font-extrabold tracking-tight">S</span>
+        </div>
+        <span className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">SoloSuite</span>
       </div>
-
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-primary">Join SoloSuite</CardTitle>
-          <CardDescription>Create your account to get started</CardDescription>
+      <Card className="w-full max-w-md rounded-2xl shadow-xl border-0">
+        <CardHeader className="text-center pb-2">
+          <CardTitle className="text-3xl font-bold text-primary mb-1">Join SoloSuite</CardTitle>
+          <CardDescription className="text-base">Create your account to get started</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" name="name" type="text" required />
+              <Label htmlFor="name" className="text-base font-medium">Full Name</Label>
+              <Input id="name" name="name" type="text" required className="mt-1 h-12 text-base px-4" autoComplete="name" />
             </div>
-
             <div>
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required />
+              <Label htmlFor="email" className="text-base font-medium">Email</Label>
+              <Input id="email" name="email" type="email" required className="mt-1 h-12 text-base px-4" autoComplete="email" />
             </div>
-
             <div>
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required />
+              <Label htmlFor="password" className="text-base font-medium">Password</Label>
+              <Input id="password" name="password" type="password" required className="mt-1 h-12 text-base px-4" autoComplete="new-password" />
             </div>
-
             <div>
-              <Label>I am a:</Label>
-              <RadioGroup name="role" defaultValue="provider" className="mt-2">
+              <Label className="text-base font-medium">I am a:</Label>
+              <RadioGroup name="role" defaultValue="provider" className="mt-2 space-y-2">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="provider" id="provider" />
                   <Label htmlFor="provider">Service Provider (Freelancer/Creator)</Label>
@@ -85,28 +85,26 @@ function SignUpContent() {
                 </div>
               </RadioGroup>
             </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating Account..." : "Sign Up"}
-            </Button>
-
             {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
+              <Alert variant="destructive" className="text-base">
+                <AlertCircle className="h-5 w-5" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+            <Button type="submit" className="w-full h-12 text-base font-semibold shadow-md" disabled={loading}>
+              {loading ? "Creating Account..." : "Sign Up"}
+            </Button>
           </form>
-
-          <div className="mt-4 text-center">
+          <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link href="/auth/signin" className="text-primary hover:underline">
-                Sign in
-              </Link>
+              Already have an account?{' '}
+              <Link href="/auth/signin" className="text-primary font-semibold hover:underline">Sign in</Link>
             </p>
           </div>
         </CardContent>
+        <div className="flex justify-center py-4 border-t border-gray-100 dark:border-gray-800">
+          <ModeToggle />
+        </div>
       </Card>
     </div>
   )

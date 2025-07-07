@@ -20,10 +20,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
           <AuthProvider>
-            {children}
+            <div className="min-h-screen w-full flex flex-col bg-white dark:bg-gray-900">
+              {children}
+            </div>
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
