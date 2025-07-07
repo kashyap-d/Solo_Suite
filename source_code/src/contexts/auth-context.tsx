@@ -28,109 +28,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   const fetchUserProfile = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
         .single();
 
       if (error) throw error;
       setUserProfile(data);
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error("Error fetching user profile:", error);
     }
   }, []);
 
   useEffect(() => {
-    const getInitialSession = async () => {
-      let retryCount = 0;
+    const loadSession = async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const sessionUser = sessionData.session?.user || null;
 
-      while (retryCount < 3) {
-        try {
-          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-          const { data: userData, error: userError } = await supabase.auth.getUser();
+        setUser(sessionUser);
 
-          if (sessionData.session && userData?.user && !sessionError && !userError) {
-            setUser(userData.user);
-            await fetchUserProfile(userData.user.id);
-            setLoading(false);
-            return;
-          }
-        } catch (err) {
-          console.warn(`Session check attempt ${retryCount + 1} failed`, err);
+        if (sessionUser) {
+          await fetchUserProfile(sessionUser.id);
         }
-
-        retryCount++;
-        await new Promise((res) => setTimeout(res, 300)); // 300ms delay
+      } catch (err) {
+        console.error("Error loading session:", err);
+      } finally {
+        setLoading(false);
       }
-
-      console.warn('❌ Could not validate session after retries. Clearing and reloading.');
-      localStorage.clear();
-      await supabase.auth.signOut();
-      location.reload();
     };
 
-    getInitialSession();
+    loadSession();
 
-    // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const sessionUser = session?.user ?? null;
+      setUser(sessionUser);
 
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
+      if (sessionUser) {
+        await fetchUserProfile(sessionUser.id);
       } else {
         setUserProfile(null);
       }
-
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, [fetchUserProfile]);
 
-  useEffect(() => {
-    if (loading) {
-      const timeout = setTimeout(() => {
-        setLoadingError(
-          'Could not connect to the server. Please check your connection or try again later.'
-        );
-        setLoading(false);
-      }, 10000); // 10 seconds timeout
-      return () => clearTimeout(timeout);
-    }
-  }, [loading]);
-
-  useEffect(() => {
-    const refreshSession = async () => {
-      try {
-        await supabase.auth.getSession(); // just to trigger revalidation
-      } catch (err) {
-        toast.error('Lost connection to the server. Reloading...');
-        setTimeout(() => window.location.reload(), 1000);
-      }
-    };
-
-    const handler = () => refreshSession();
-    document.addEventListener('visibilitychange', handler);
-    window.addEventListener('online', handler);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handler);
-      window.removeEventListener('online', handler);
-    };
-  }, []);
-
   const signUp = async (
     email: string,
     password: string,
     name: string,
-    role: 'provider' | 'client'
+    role: "provider" | "client"
   ) => {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -141,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert([
+        const { error: profileError } = await supabase.from("profiles").insert([
           {
             id: data.user.id,
             email: data.user.email,
@@ -149,11 +103,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role,
           },
         ]);
-
         if (profileError) throw profileError;
       }
 
-      return { user: data.user };
+      return { error: undefined };
     } catch (error: any) {
       return { error: error.message };
     }
@@ -161,13 +114,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      return {};
+      return { error: undefined };
     } catch (error: any) {
       return { error: error.message };
     }
@@ -179,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserProfile(null);
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     userProfile,
     loading,
@@ -192,35 +141,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (
       <div
         style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        Loading...
-      </div>
-    );
-  }
-
-  if (loadingError) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-        }}
-      >
-        <p style={{ color: 'red', marginBottom: 16 }}>{loadingError}</p>
-        <button
-          onClick={() => window.location.reload()}
-          style={{ padding: '8px 16px', fontSize: 16 }}
-        >
-          Retry
-        </button>
+        <p>Loading...</p>
       </div>
     );
   }
@@ -228,10 +155,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// ---------- Hook ----------
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
