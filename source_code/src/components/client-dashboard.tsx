@@ -172,32 +172,32 @@ export function ClientDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="space-y-8 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gradient-to-r from-indigo-950/80 to-purple-900/80 rounded-2xl shadow-lg p-6 mb-2">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent drop-shadow-sm">
               Client Dashboard
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 text-base sm:text-lg">
               Manage your job postings and view applications
             </p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-2 sm:gap-4 w-full sm:w-auto justify-center">
             <Link href="/dashboard/freelancers">
-              <Button variant="outline">
+              <Button variant="outline" className="w-full sm:w-auto">
                 <Users className="h-4 w-4 mr-2" />
                 Find Freelancers
               </Button>
             </Link>
             <Link href="/dashboard/providers-worked-with">
-              <Button variant="outline">
+              <Button variant="outline" className="w-full sm:w-auto">
                 <Briefcase className="h-4 w-4 mr-2" />
                 Providers Worked With
               </Button>
             </Link>
             <Link href="/dashboard/post-job">
-              <Button className="bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg transition-all duration-300">
+              <Button className="w-full sm:w-auto bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg transition-all duration-300">
                 <Plus className="h-4 w-4 mr-2" />
                 Post a New Job
               </Button>
@@ -206,9 +206,9 @@ export function ClientDashboard() {
         </div>
 
         {/* My Job Postings */}
-        <Card>
+        <Card className="rounded-2xl shadow-xl border-0">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <Briefcase className="h-5 w-5" />
               My Job Postings
             </CardTitle>
@@ -224,28 +224,28 @@ export function ClientDashboard() {
                 </Link>
               </div>
             )}
-            <div className="space-y-4">
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {jobs.map(job => (
-                <Card key={job.id} className="p-4 flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold">{job.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                      <Badge variant={getStatusVariant(job.status)} className="capitalize">
+                <Card key={job.id} className="p-4 flex flex-col gap-4 rounded-xl shadow-md border bg-background dark:bg-muted">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="font-semibold text-lg truncate">{job.title}</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
+                      <Badge variant={getStatusVariant(job.status)} className="capitalize px-2 py-1 text-xs font-semibold">
                         {job.status}
                       </Badge>
-                      <span>{job.job_applications.length} Applications</span>
-                      <span>Created on {new Date(job.created_at).toLocaleDateString()}</span>
+                      <span className="bg-muted rounded px-2 py-1">{job.job_applications.length} Applications</span>
+                      <span className="bg-muted rounded px-2 py-1">Created {new Date(job.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Link href={`/dashboard/jobs-marketplace/${job.id}`}>
-                      <Button variant="outline" size="sm">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-2 mt-2 w-full">
+                    <Link href={`/dashboard/jobs-marketplace/${job.id}`} className="w-full sm:w-auto">
+                      <Button variant="outline" size="sm" className="w-full sm:w-auto">
                         <Eye className="h-4 w-4 mr-2" />
                         View Job
                       </Button>
                     </Link>
-                    <Link href={`/dashboard/my-jobs/${job.id}/applications`}>
-                      <Button size="sm">
+                    <Link href={`/dashboard/my-jobs/${job.id}/applications`} className="w-full sm:w-auto">
+                      <Button size="sm" className="w-full sm:w-auto bg-gradient-to-r from-indigo-700 to-purple-800 text-white">
                         <FileText className="h-4 w-4 mr-2" />
                         View Applications
                       </Button>
@@ -253,6 +253,7 @@ export function ClientDashboard() {
                     <Button
                       variant="destructive"
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() => setJobToDelete(job)}
                     >
                       <Trash className="h-4 w-4 mr-2" />
@@ -263,6 +264,7 @@ export function ClientDashboard() {
                       <Button
                         size="sm"
                         variant="secondary"
+                        className="w-full sm:w-auto"
                         onClick={async () => {
                           // Mark job as completed
                           await supabase.from("jobs").update({ status: "completed" }).eq("id", job.id)
@@ -291,9 +293,9 @@ export function ClientDashboard() {
         </Card>
 
         {/* Recent Applications */}
-        <Card>
+        <Card className="rounded-2xl shadow-xl border-0">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <Users className="h-5 w-5" />
               Recent Applications
             </CardTitle>
@@ -307,27 +309,23 @@ export function ClientDashboard() {
               {recentApplications.map((app, index) => (
                 <div
                   key={app.id}
-                  className={`flex justify-between items-center p-4 rounded-xl border ${
-                    index % 2 === 0
-                      ? "bg-muted/40 dark:bg-muted/20"
-                      : "bg-background dark:bg-muted/10"
-                  }`}
+                  className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-xl border shadow bg-background dark:bg-muted gap-2`}
                 >
                   <div className="space-y-1">
                     <p className="font-semibold leading-none">
                       {app.profiles?.name || "Anonymous"}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      applied for{" "}
+                      applied for {" "}
                       <span className="font-medium text-primary">{app.jobTitle}</span>
                     </p>
                   </div>
-                  <div className="text-right space-y-1">
+                  <div className="text-left sm:text-right space-y-1 w-full sm:w-auto">
                     <p className="text-xs text-muted-foreground">
                       {new Date(app.created_at).toLocaleDateString()}
                     </p>
                     <Link href={`/dashboard/my-jobs/${app.jobId}/applications`}>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="w-full sm:w-auto">
                         View
                       </Button>
                     </Link>

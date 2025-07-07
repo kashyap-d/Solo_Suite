@@ -169,29 +169,31 @@ function PortfolioDetailContent() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => router.push("/dashboard")}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                {portfolio.provider_name}'s Portfolio
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Full professional profile and services
-              </p>
+        <div className="mb-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-4 w-full">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard")}
+                className="flex items-center gap-2 w-full sm:w-auto"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent text-left sm:text-center">
+                  {portfolio.provider_name}'s Portfolio
+                </h1>
+                <p className="text-muted-foreground mt-1 text-left sm:text-center">
+                  Full professional profile and services
+                </p>
+              </div>
+              <Button className="w-full sm:w-auto bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg transition-all duration-300">
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Contact Provider
+              </Button>
             </div>
           </div>
-          <Button className="bg-gradient-to-r from-indigo-700 to-purple-800 hover:shadow-2xl hover:brightness-105 shadow-lg transition-all duration-300">
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Contact Provider
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
