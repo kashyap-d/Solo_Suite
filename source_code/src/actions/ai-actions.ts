@@ -1,7 +1,7 @@
 "use server"
 
 import Groq from "groq-sdk"
-import { supabase, supabaseAdmin } from "@/lib/supabaseClient"
+import { supabase } from "@/lib/supabaseClient"
 import type { Invoice } from "@/lib/supabaseClient"
 
 // Initialize Groq with your API key
@@ -471,7 +471,7 @@ export async function saveInvoice(invoiceData: any, userId: string) {
     }
 
     // Use admin client if available, otherwise use regular client
-    const client = supabaseAdmin || supabase
+    const client = supabase
     const { data, error } = await client.from("invoices").insert([invoiceToInsert]).select()
 
     if (error) throw error
@@ -486,7 +486,7 @@ export async function saveInvoice(invoiceData: any, userId: string) {
 export async function getInvoices(userId: string) {
   try {
     // Use admin client if available, otherwise use regular client
-    const client = supabaseAdmin || supabase
+    const client = supabase
     const { data, error } = await client
       .from("invoices")
       .select("*")
@@ -505,7 +505,7 @@ export async function getInvoices(userId: string) {
 export async function updateInvoiceStatus(invoiceId: string, status: "draft" | "sent" | "paid" | "overdue") {
   try {
     // Use admin client if available, otherwise use regular client
-    const client = supabaseAdmin || supabase
+    const client = supabase
     const { error } = await client.from("invoices").update({ status }).eq("id", invoiceId)
 
     if (error) throw error
@@ -518,7 +518,7 @@ export async function updateInvoiceStatus(invoiceId: string, status: "draft" | "
 export async function deleteInvoice(invoiceId: string) {
   try {
     // Use admin client if available, otherwise use regular client
-    const client = supabaseAdmin || supabase
+    const client = supabase
     const { error } = await client.from("invoices").delete().eq("id", invoiceId)
 
     if (error) throw error
@@ -529,7 +529,7 @@ export async function deleteInvoice(invoiceId: string) {
 }
 
 export async function deleteJob(jobId: string, userId: string) {
-  const client = supabaseAdmin || supabase
+  const client = supabase
   try {
     // First, delete all applications for the job
     await client
@@ -555,7 +555,7 @@ export async function deleteJob(jobId: string, userId: string) {
 }
 
 export async function updateJob(jobId: string, userId: string, jobData: any) {
-  const client = supabaseAdmin || supabase
+  const client = supabase
   try {
     const { error } = await client
       .from("jobs")

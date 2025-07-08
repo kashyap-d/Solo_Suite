@@ -3,7 +3,8 @@
 import type React from "react"
 import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import type { User } from "@supabase/supabase-js"
-import { supabase, type UserProfile } from "@/lib/supabaseClient"
+import { supabase } from "@/lib/supabaseClient"
+import type { UserProfile } from "@/lib/supabaseClient"
 import { toast } from "sonner";
 
 interface AuthContextType {
