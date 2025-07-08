@@ -1,6 +1,14 @@
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
 
-export const supabase = createPagesBrowserClient();
+export const supabase = createPagesBrowserClient({
+  cookieOptions: {
+    name: 'sb-auth-token',
+    domain: undefined, // Set to your domain if needed
+    path: '/',
+    sameSite: 'lax',
+    secure: true,
+  }
+});
 
 export interface UserProfile {
     id: string
