@@ -232,7 +232,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="relative z-10 container mx-auto px-4 py-8 border-t border-gray-200 dark:border-gray-700">
         <div className="text-center text-gray-600 dark:text-gray-300">
-          <p>&copy; 2025 SoloSuite. Built for student entrepreneurs, by student entrepreneurs.</p>
+          <p>2025 SoloSuite. Built for student entrepreneurs, by student entrepreneurs.</p>
         </div>
       </footer>
     </div>
