@@ -6,7 +6,7 @@
 
 ## 🧠 Project Description
 
-**Solo Suite** is a clean, all-in-one workspace where service providers and clients can plan, collaborate, showcase, and grow. Built using modern web technologies, it merges powerful features like task management, job boards, portfolio displays, and AI assistance — all in a single platform.
+We have seen that it was very difficult for most students to find work, get an internship or apply their skills and another gap where people where struggling to find quality skills to get their work done so we built solo suite as a local app where it is something where the students and our college crowd can help each other out. For example: the tennis team want a photoshoot and are looking for a good photographer or let's say a photographer needs a personal website portfolio built for them now usually we just have to find someone through mutuals with no guarantee of skill. Thats where solo suite comes in, you can post a job and everyone on the platform can apply, where the resumes can be viewed along with the applicant's previous work's reviews and ratings as well and we can also auto generate a resume based on all their details if they don't have one in place. along with a lot of task management for the service providers. This has an element of trust which other platforms with random freelancers don't and is usually at a much better pricing with great understanding between both parties since they're in the same community.
 
 ---
 
